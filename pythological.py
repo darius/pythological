@@ -132,8 +132,9 @@ def walk(val, s):
     is not a bound variable; it's either a non-variable or unbound."""
     assert is_subst(s)
     while is_var(val):
-        while s is not ():
-            var1, val1, s = s
+        s1 = s
+        while s1 is not ():
+            var1, val1, s1 = s1
             if var1 is val:
                 val = val1
                 break
@@ -168,7 +169,7 @@ def unify(u, v, s):
 # Reifying
 ## x, y = Var('x'), Var('y')
 ## reify((x, y, x, (42,)), empty_s)
-#. (_.0, _.1, _.0, (42,))
+#. (_.2, _.1, _.2, (42,))
 
 def reify(val, s):
     """Return val with substitutions applied and any unbound variables
@@ -268,3 +269,7 @@ def nevero(): return delay(lambda: nevero())
 
 ## list(islice(nevero()(empty_s), 0, 5))
 #. [None, None, None, None, None]
+
+## q, x = Var('q'), Var('x')
+## walk(x, (q, 5, (x, q, ())))
+#. 5
