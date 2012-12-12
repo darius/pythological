@@ -19,7 +19,7 @@ def gen_solutions(var, goal):
 
 # Goals
 
-# A goal is a function from substitution to generator.  Each value we
+# A goal is a function from substitution to generator. Each value we
 # generate is an optional substitution, that is: a substitution or
 # None. The option of None gives a way to "yield your timeslice" from
 # an unproductive subcomputation. (So to feed a result opt_s from one
