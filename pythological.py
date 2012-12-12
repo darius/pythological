@@ -80,6 +80,13 @@ def delay(thunk):
 
 
 # Variables, values, and substitutions
+# (var, val, and s, by convention)
+
+# Val = Var | tuple(Val*) | Atom [any other type, treated as an atom]
+
+def is_var(x):   return isinstance(x, Var)
+def is_tuple(x): return isinstance(x, tuple)
+def is_atom(x):  return not (is_var(x) or is_tuple(x))
 
 class Var(object):
     "A variable."
@@ -88,26 +95,24 @@ class Var(object):
     def __repr__(self):
         return self.name
 
-def is_var(x):   return isinstance(x, Var)
-def is_tuple(x): return isinstance(x, tuple)
-
-# Substitutions (s by convention)
+# Substitutions
 # data S = () | (Var, Val, S)
-# where Val = Var | tuple(Val*) | Atom [any other type, treated as an atom]
-# Invariant: no transitive cycles in the val for any var i.e. expand
-# out a val in s, substituting vars, and you won't ever run into the
-# val's var.
+# Invariant: no transitive cycles in the val for any var. (i.e. expand
+# out a val in s, substituting for vars, and you won't ever run into
+# the val's var.)
+
+def is_subst(x): return is_tuple(x) and len(x) in (0, 3)
 
 empty_s = ()
 
 def ext_s_no_check(var, val, s):
-    assert s is () or is_tuple(s)
+    assert is_subst(s)
     return (var, val, s)
 
 def ext_s(var, val, s):
     """Return s plus (var: val) if possible, else None.
     Pre: var is unbound in s."""
-    assert s is () or is_tuple(s)
+    assert is_subst(s)
     return None if occurs(var, val, s) else (var, val, s)
 
 def occurs(var, val, s):
@@ -125,7 +130,7 @@ def occurs(var, val, s):
 def walk(val, s):
     """Return val with substitution s applied enough that the result
     is not a bound variable; it's either a non-variable or unbound."""
-    assert s is () or is_tuple(s)
+    assert is_subst(s)
     while is_var(val):
         while s is not ():
             var1, val1, s = s
@@ -139,7 +144,7 @@ def walk(val, s):
 def unify(u, v, s):
     """Return s plus minimal extensions to make u and v equal mod
     substitution, if possible; else None."""
-    assert s is () or is_tuple(s)
+    assert is_subst(s)
     u = walk(u, s)
     v = walk(v, s)
     if u is v:
