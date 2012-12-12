@@ -139,9 +139,7 @@ def eq(u, v):
     return goal
 
 def either(goal1, goal2):
-    def goal(s):
-        return interleave((goal1(s), goal2(s)))
-    return goal
+    return lambda s: interleave((goal1(s), goal2(s)))
 
 def interleave(its):
     while its:
