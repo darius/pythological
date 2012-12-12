@@ -126,8 +126,8 @@ def ReifiedVar(k):
 # Let's try making the streams generators.
 # 
 # Each value we generate is an optional substitution, that is: a
-# substitution or None. The None is to give an opportunity to just
-# "yield your timeslice" in an unproductive subcomputation.
+# substitution or None. The option of None gives a way to "yield your
+# timeslice" in an unproductive subcomputation.
 #
 # A goal is a function from substitution to generator. (So to feed a
 # result opt_s from one generator to another goal, you must first
