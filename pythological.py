@@ -119,18 +119,17 @@ def ReifiedVar(k):
 
 
 # Goals
-# Let's try using Python generators for the streams.
-# (Why are we suddenly calling it 'a' instead of 's'?)
+# Let's try making the streams generators.
 
 def eq(u, v):
-    def goal(a):
-        assert a is not None
-        s = unify(u, v, a)
-        if s is not None: yield s
+    def goal(s):
+        assert s is not None
+        s1 = unify(u, v, s)
+        if s1 is not None: yield s1
     return goal
 
 def either(goal1, goal2):
-    return lambda a: interleave((goal1(a), goal2(a)))
+    return lambda s: interleave((goal1(s), goal2(s)))
 
 def interleave(its):
     while its:
@@ -143,23 +142,23 @@ def interleave(its):
             its = its + (it,)
 
 def both(goal1, goal2):
-    def goal(a):
-        assert a is not None
-        for a1 in goal1(a):
-            for a2 in goal2(a1):
-                yield a2
+    def goal(s):
+        assert s is not None
+        for s1 in goal1(s):
+            for s2 in goal2(s1):
+                yield s2
     return goal
 
 def fresh(names_string, receiver):
     return receiver(*map(Var, names_string.split()))
 
 def delay(thunk):
-    return lambda a: thunk()(a)
+    return lambda s: thunk()(s)
 
 def run(var, goal, n=None):
     it = goal(empty_s)
-    for a, _ in zip(it, count() if n is None else xrange(n)):
-        yield reify(var, a)
+    for s, _ in zip(it, count() if n is None else xrange(n)):
+        yield reify(var, s)
 
 
 # Examples
@@ -187,3 +186,8 @@ def appendo(x, y, z):
 #. [(_.0, ())]
 ## list(run(q, fresh('a b', lambda a, b: appendo(a, b, q)), n=5))
 #. [_.0, (_.0, _.1), (_.0, (_.1, _.2)), (_.0, (_.1, (_.2, _.3))), (_.0, (_.1, (_.2, (_.3, _.4))))]
+
+
+def nevero(): return delay(lambda: nevero())
+
+### list(run(q, either(nevero(), eq(q, "tea")), n=1))
