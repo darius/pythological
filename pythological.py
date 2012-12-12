@@ -194,23 +194,23 @@ def appendo(x, y, z):
 ## q = Var('q')
 ## unify((), (), empty_s)
 #. ()
-## list(run(q, eq((), ())))
+## run(q, eq((), ()))
 #. [_.0]
-## list(run(q, appendo((), (), ())))
+## run(q, appendo((), (), ()))
 #. [_.0]
-## list(run(q, appendo((), (), q)))
+## run(q, appendo((), (), q))
 #. [()]
-## list(run(q, appendo((1,()), (), (1,()))))
+## run(q, appendo((1,()), (), (1,())))
 #. [_.0]
-## list(run(q, appendo((1,()), (), q)))
+## run(q, appendo((1,()), (), q))
 #. [(_.0, ())]
-## list(run(q, fresh('a b', lambda a, b: appendo(a, b, q)), n=5))
+## run(q, fresh('a b', lambda a, b: appendo(a, b, q)), n=5)
 #. [_.0, (_.0, _.1), (_.0, (_.1, _.2)), (_.0, (_.1, (_.2, _.3))), (_.0, (_.1, (_.2, (_.3, _.4))))]
 
 
 def nevero(): return delay(lambda: nevero())
 
-## list(run(q, either(nevero(), eq(q, "tea")), n=1))
+## run(q, either(nevero(), eq(q, "tea")), n=1)
 #. ['tea']
 
 ## list(islice(nevero()(empty_s), 0, 5))
