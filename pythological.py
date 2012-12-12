@@ -180,10 +180,9 @@ def gen_solutions(var, goal):
 
 def run(var, goal, n=None):
     it = gen_solutions(var, goal)
-    if n is None:
-        return list(it)
-    else:
-        return list(islice(it, 0, n))
+    if n is not None:
+        it = islice(it, 0, n)
+    return list(it)
 
 
 # Examples
