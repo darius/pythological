@@ -131,7 +131,7 @@ def ReifiedVar(k):
 #
 # A goal is a function from substitution to generator. (So to feed a
 # result opt_s from one generator to another goal, you must first
-# check if it's None and then skip it.)
+# check it and skip it if None.)
 
 def eq(u, v):
     def goal(s):
@@ -212,3 +212,6 @@ def nevero(): return delay(lambda: nevero())
 
 ## list(run(q, either(nevero(), eq(q, "tea")), n=1))
 #. ['tea']
+
+## list(islice(nevero()(empty_s), 0, 5))
+#. [None, None, None, None, None]
