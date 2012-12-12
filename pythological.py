@@ -43,14 +43,18 @@ def occurs(var, val, s):
         return False
 
 def walk(val, s):
-    assert s is not None
     """Return val with substitution s applied enough that the result
     is not a bound variable; it's either a non-variable or unbound."""
-    if is_var(val):
+    assert s is not None
+    while is_var(val):
         while s is not ():
             var1, val1, s = s
-            if var1 is val: return walk(val1, s)
+            if var1 is val:
+                val = val1
+                break
             assert s is not None
+        else:
+            break
     return val
 
 def unify(u, v, s):
