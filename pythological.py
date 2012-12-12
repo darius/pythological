@@ -30,7 +30,7 @@ def ext_s(var, val, s):
     return None if occurs(var, val, s) else (var, val, s)
 
 def occurs(var, val, s):
-    """Return true if adding (var, val) to s would introduce a cycle.
+    """Would adding (var, val) to s introduce a cycle?
     Pre: var is unbound in s."""
     # Note the top-level walk in the call from unify is redundant
     assert s is not None
