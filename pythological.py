@@ -1,8 +1,84 @@
 from itertools import count, islice
 
+# Top level
+
+def run(var, goal, n=None):
+    """Return a list of reifications of var from the solutions of goal
+    (only the first n solutions, if n given)."""
+    it = gen_solutions(var, goal)
+    if n is not None:
+        it = islice(it, 0, n)
+    return list(it)
+
+def gen_solutions(var, goal):
+    "Generate the reifications of var from the solutions of goal."
+    for opt_s in goal(empty_s):
+        if opt_s is not None:
+            yield reify(var, opt_s)
+
+
+# Goals
+# Let's try making the streams generators.
+# 
+# Each value we generate is an optional substitution, that is: a
+# substitution or None. The option of None gives a way to "yield your
+# timeslice" from an unproductive subcomputation.
+#
+# A goal is a function from substitution to generator. (So to feed a
+# result opt_s from one generator to another goal, you must first
+# check it and skip it if None.)
+
+def eq(u, v):
+    "Succeed when u unifies with v."
+    def goal(s):
+        yield unify(u, v, s)
+    return goal
+
+def either(goal1, goal2):
+    """Succeed when goal1 succeeds or goal2 succeeds (not sharing any
+    new substitutions between the two)."""
+    return lambda s: interleave((goal1(s), goal2(s)))
+
+def interleave(its):
+    """Given a tuple of iterators, generate one value from each, in
+    order, cyclically until all are exhausted."""
+    while its:
+        try:
+            yield next(its[0])
+        except StopIteration:
+            its = its[1:]
+        else:
+            its = its[1:] + (its[0],)
+
+def both(goal1, goal2):
+    """Succeed when goal1 succeeds and goal2 does too (sharing new
+    substitutions)."""
+    def goal(s):
+        for opt_s1 in goal1(s):
+            if opt_s1 is not None:
+                for opt_s2 in goal2(opt_s1):
+                    yield opt_s2
+    return goal
+
+def fresh(names_string, receiver):
+    "Call receiver with fresh new variables."
+    return receiver(*map(Var, names_string.split()))
+
+def delay(thunk):
+    """A goal equivalent to thunk() but not quite as prone to hanging
+    up the larger computation."""
+    def goal(s):
+        # Keep from hogging the scheduler if recursion never yields anything:
+        yield None
+        for opt_s in thunk()(s):
+            yield opt_s
+    return goal
+
+
 # Variables, values, and substitutions
 
 class Var(object):
+    "A variable."
     def __init__(self, name):
         self.name = name
     def __repr__(self):
@@ -11,11 +87,12 @@ class Var(object):
 def is_var(x):   return isinstance(x, Var)
 def is_tuple(x): return isinstance(x, tuple)
 
+# Substitutions (s by convention)
 # data S = () | (Var, Val, S)
 # where Val = Var | tuple(Val*) | Atom [any other type, treated as an atom]
-# Invariant: no transitive cycles in the val for any var
-# i.e. expand out a val in s, substituting vars, and you
-# won't ever run into the val's var.
+# Invariant: no transitive cycles in the val for any var i.e. expand
+# out a val in s, substituting vars, and you won't ever run into the
+# val's var.
 
 empty_s = ()
 
@@ -24,13 +101,13 @@ def ext_s_no_check(var, val, s):
     return (var, val, s)
 
 def ext_s(var, val, s):
-    """Return s plus (var,val) if possible, else None.
+    """Return s plus (var: val) if possible, else None.
     Pre: var is unbound in s."""
     assert s is () or is_tuple(s)
     return None if occurs(var, val, s) else (var, val, s)
 
 def occurs(var, val, s):
-    """Would adding (var, val) to s introduce a cycle?
+    """Would adding (var: val) to s introduce a cycle?
     Pre: var is unbound in s."""
     # Note the top-level walk in the call from unify is redundant
     val = walk(val, s)
@@ -120,65 +197,6 @@ def name_vars(val):
 
 def ReifiedVar(k):
     return Var('_.%d' % k)
-
-
-# Goals
-# Let's try making the streams generators.
-# 
-# Each value we generate is an optional substitution, that is: a
-# substitution or None. The option of None gives a way to "yield your
-# timeslice" in an unproductive subcomputation.
-#
-# A goal is a function from substitution to generator. (So to feed a
-# result opt_s from one generator to another goal, you must first
-# check it and skip it if None.)
-
-def eq(u, v):
-    def goal(s):
-        yield unify(u, v, s)
-    return goal
-
-def either(goal1, goal2):
-    return lambda s: interleave((goal1(s), goal2(s)))
-
-def interleave(its):
-    while its:
-        try:
-            yield next(its[0])
-        except StopIteration:
-            its = its[1:]
-        else:
-            its = its[1:] + (its[0],)
-
-def both(goal1, goal2):
-    def goal(s):
-        for opt_s1 in goal1(s):
-            if opt_s1 is not None:
-                for opt_s2 in goal2(opt_s1):
-                    yield opt_s2
-    return goal
-
-def fresh(names_string, receiver):
-    return receiver(*map(Var, names_string.split()))
-
-def delay(thunk):
-    def goal(s):
-        # Keep from hogging the scheduler if recursion never yields anything:
-        yield None
-        for opt_s in thunk()(s):
-            yield opt_s
-    return goal
-
-def gen_solutions(var, goal):
-    for opt_s in goal(empty_s):
-        if opt_s is not None:
-            yield reify(var, opt_s)
-
-def run(var, goal, n=None):
-    it = gen_solutions(var, goal)
-    if n is not None:
-        it = islice(it, 0, n)
-    return list(it)
 
 
 # Examples
