@@ -163,7 +163,7 @@ def fresh(names_string, receiver):
 
 def delay(thunk):
     def goal(s):
-        # Keep from hogging the scheduler if recursion never yields an s:
+        # Keep from hogging the scheduler if recursion never yields anything:
         yield None
         for opt_s in thunk()(s):
             yield opt_s
