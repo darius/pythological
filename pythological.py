@@ -242,6 +242,7 @@ def appendo(x, y, z):
 #. 
 
 def show_s(opt_s):
+    "Return a more human-readable repr of a substitution."
     if opt_s is None: return 'None'
     s = opt_s
     bindings = []
