@@ -133,13 +133,12 @@ def either(goal1, goal2):
 
 def interleave(its):
     while its:
-        it, its = its[0], its[1:]
         try:
-            yield next(it)
+            yield next(its[0])
         except StopIteration:
-            pass
+            its = its[1:]
         else:
-            its = its + (it,)
+            its = its[1:] + (its[0],)
 
 def both(goal1, goal2):
     def goal(s):
