@@ -154,11 +154,9 @@ def interleave(its):
 
 def both(goal1, goal2):
     def goal(s):
-        if s is not None:
-            for s1 in goal1(s):
-                if s1 is not None:
-                    for s2 in goal2(s1):
-                        yield s2
+        for s1 in goal1(s):
+            for s2 in goal2(s1):
+                yield s2
     return goal
 
 def fresh(names_string, receiver):
