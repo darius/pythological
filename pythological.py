@@ -67,7 +67,7 @@ def unify(u, v, s):
         return s
     if is_var(u):
         if is_var(v):
-            return ext_s_no_check(u, v, s) # order doesn't matter, right?
+            return ext_s_no_check(u, v, s)
         else:
             return ext_s(u, v, s)
     elif is_var(v):
