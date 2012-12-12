@@ -20,20 +20,19 @@ def is_tuple(x): return isinstance(x, tuple)
 empty_s = ()
 
 def ext_s_no_check(var, val, s):
-    assert s is not None
+    assert s is () or is_tuple(s)
     return (var, val, s)
 
 def ext_s(var, val, s):
     """Return s plus (var,val) if possible, else None.
     Pre: var is unbound in s."""
-    assert s is not None
+    assert s is () or is_tuple(s)
     return None if occurs(var, val, s) else (var, val, s)
 
 def occurs(var, val, s):
     """Would adding (var, val) to s introduce a cycle?
     Pre: var is unbound in s."""
     # Note the top-level walk in the call from unify is redundant
-    assert s is not None
     val = walk(val, s)
     if is_var(val):
         return var is val
@@ -45,14 +44,13 @@ def occurs(var, val, s):
 def walk(val, s):
     """Return val with substitution s applied enough that the result
     is not a bound variable; it's either a non-variable or unbound."""
-    assert s is not None
+    assert s is () or is_tuple(s)
     while is_var(val):
         while s is not ():
             var1, val1, s = s
             if var1 is val:
                 val = val1
                 break
-            assert s is not None
         else:
             break
     return val
@@ -60,7 +58,7 @@ def walk(val, s):
 def unify(u, v, s):
     """Return s plus minimal extensions to make u and v equal mod
     substitution, if possible; else None."""
-    assert s is not None
+    assert s is () or is_tuple(s)
     u = walk(u, s)
     v = walk(v, s)
     if u is v:
@@ -75,7 +73,7 @@ def unify(u, v, s):
     elif is_tuple(u) and is_tuple(v) and len(u) == len(v):
         for x, y in zip(u, v):
             s = unify(x, y, s)
-            if s is None: return None
+            if s is None: break
         return s
     else:
         return s if u == v else None
@@ -89,14 +87,12 @@ def unify(u, v, s):
 def reify(val, s):
     """Return val with substitutions applied and any unbound variables
     renamed."""
-    assert s is not None
     val = walk_full(val, s)
     return walk_full(val, name_vars(val))
 
 def walk_full(val, s):
     """Return val with substitution s fully applied: any variables
     left are unbound."""
-    assert s is not None
     val = walk(val, s)
     if is_var(val):
         return val
@@ -128,18 +124,22 @@ def ReifiedVar(k):
 
 # Goals
 # Let's try making the streams generators.
+# 
+# Each value we generate is an optional substitution, that is: an a
+# substitution or None. The None is to give an opportunity to just
+# "yield your timeslice" in an unproductive subcomputation.
+#
+# A goal is a function from substitution to generator. (So to feed a
+# result opt_s from one generator to another goal, you must first
+# check if it's None and then skip it.)
 
 def eq(u, v):
     def goal(s):
-        if s is not None:
-            s = unify(u, v, s)
-            if s is not None:
-                yield s
+        yield unify(u, v, s)
     return goal
 
 def either(goal1, goal2):
     def goal(s):
-        if s is None: return ()
         return interleave((goal1(s), goal2(s)))
     return goal
 
@@ -154,9 +154,10 @@ def interleave(its):
 
 def both(goal1, goal2):
     def goal(s):
-        for s1 in goal1(s):
-            for s2 in goal2(s1):
-                yield s2
+        for opt_s1 in goal1(s):
+            if opt_s1 is not None:
+                for opt_s2 in goal2(opt_s1):
+                    yield opt_s2
     return goal
 
 def fresh(names_string, receiver):
@@ -164,17 +165,16 @@ def fresh(names_string, receiver):
 
 def delay(thunk):
     def goal(s):
-        if s is not None:
-            # Keep from hogging the scheduler if recursion never yields an s:
-            yield None
-            for s1 in thunk()(s):
-                yield s1
+        # Keep from hogging the scheduler if recursion never yields an s:
+        yield None
+        for opt_s in thunk()(s):
+            yield opt_s
     return goal
 
 def gen_solutions(var, goal):
-    for s in goal(empty_s):
-        if s is not None:
-            yield reify(var, s)
+    for opt_s in goal(empty_s):
+        if opt_s is not None:
+            yield reify(var, opt_s)
 
 def run(var, goal, n=None):
     it = gen_solutions(var, goal)
