@@ -18,15 +18,13 @@ def gen_solutions(var, goal):
 
 
 # Goals
-# Let's try making the streams generators.
-# 
-# Each value we generate is an optional substitution, that is: a
-# substitution or None. The option of None gives a way to "yield your
-# timeslice" from an unproductive subcomputation.
-#
-# A goal is a function from substitution to generator. (So to feed a
-# result opt_s from one generator to another goal, you must first
-# check it and skip it if None.)
+
+# A goal is a function from substitution to generator.  Each value we
+# generate is an optional substitution, that is: a substitution or
+# None. The option of None gives a way to "yield your timeslice" from
+# an unproductive subcomputation. (So to feed a result opt_s from one
+# generator to another goal, you must first check it and skip it if
+# None.)
 
 def eq(u, v):
     "Succeed when u unifies with v."
