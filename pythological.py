@@ -185,9 +185,15 @@ def run(var, goal, n=None):
 
 def appendo(x, y, z):
     return either(eq((x, y), ((), z)),
-                  fresh('xh xt zh zt', lambda xh, xt, zh, zt:
-                            both(eq((x, z), ((xh, xt), (zh, zt))),
+                  fresh('xh xt zt', lambda xh, xt, zt:
+                            both(eq((x, z), ((xh, xt), (xh, zt))),
                                  delay(lambda: appendo(xt, y, zt)))))
+
+## for r in fresh('a b', lambda a, b: appendo(a, b, (1, ())))(empty_s): print show_s(r)
+#. b: (1, ())  a: ()
+#. None
+#. b: ()  xt: ()  zt: ()  xh: 1  a: (xh, xt)
+#. 
 
 ## q = Var('q')
 ## unify((), (), empty_s)
@@ -201,26 +207,20 @@ def appendo(x, y, z):
 ## run(q, appendo((1,()), (), (1,())))
 #. [_.0]
 ## run(q, appendo((1,()), (), q))
-#. [(_.0, ())]
+#. [(1, ())]
 ## run(q, fresh('a b', lambda a, b: appendo(a, b, q)), n=5)
 #. [_.0, (_.0, _.1), (_.0, (_.1, _.2)), (_.0, (_.1, (_.2, _.3))), (_.0, (_.1, (_.2, (_.3, _.4))))]
 ## for r in run(q, fresh('a b', lambda a, b: both(eq(q, (a, b)), appendo(a, b, (4, (3, (2, (1, ())))))))): print r
 #. ((), (4, (3, (2, (1, ())))))
-#. ((_.0, ()), (3, (2, (1, ()))))
-#. ((_.0, (_.1, ())), (2, (1, ())))
-#. ((_.0, (_.1, (_.2, ()))), (1, ()))
-#. ((_.0, (_.1, (_.2, (_.3, ())))), ())
+#. ((4, ()), (3, (2, (1, ()))))
+#. ((4, (3, ())), (2, (1, ())))
+#. ((4, (3, (2, ()))), (1, ()))
+#. ((4, (3, (2, (1, ())))), ())
 #. 
 
 ## for r in run(q, fresh('a b', lambda a, b: both(eq(q, (a, b)), appendo(a, b, (1, ()))))): print r
 #. ((), (1, ()))
-#. ((_.0, ()), ())
-#. 
-
-## for r in fresh('a b', lambda a, b: appendo(a, b, (1, ())))(empty_s): print show_s(r)
-#. b: (1, ())  a: ()
-#. None
-#. b: ()  xt: ()  zt: ()  zh: 1  a: (xh, xt)
+#. ((1, ()), ())
 #. 
 
 def show_s(opt_s):
