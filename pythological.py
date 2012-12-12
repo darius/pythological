@@ -1,4 +1,4 @@
-from itertools import count
+from itertools import count, islice
 
 # Variables, values, and substitutions
 
@@ -12,7 +12,7 @@ def is_var(x):   return isinstance(x, Var)
 def is_tuple(x): return isinstance(x, tuple)
 
 # data S = () | (Var, Val, S)
-# where Val = Var | tuple(Val*) | Datum [treated as an atom]
+# where Val = Var | tuple(Val*) | Atom [any other type, treated as an atom]
 # Invariant: no transitive cycles in the val for any var
 # i.e. expand out a val in s, substituting vars, and you
 # won't ever run into the val's var.
@@ -45,7 +45,7 @@ def occurs(var, val, s):
 def walk(val, s):
     assert s is not None
     """Return val with substitution s applied enough that the result
-    is not a bound variable; it's either a datum or unbound."""
+    is not a bound variable; it's either a non-variable or unbound."""
     if is_var(val):
         while s is not ():
             var1, val1, s = s
@@ -68,7 +68,7 @@ def unify(u, v, s):
             return ext_s(u, v, s)
     elif is_var(v):
         return ext_s(v, u, s)
-    elif (is_tuple(u) and is_tuple(v) and len(u) == len(v)):
+    elif is_tuple(u) and is_tuple(v) and len(u) == len(v):
         for x, y in zip(u, v):
             s = unify(x, y, s)
             if s is None: return None
@@ -78,8 +78,9 @@ def unify(u, v, s):
 
 
 # Reifying
-## reify(Var('x'), empty_s)
-#. _.0
+## x, y = Var('x'), Var('y')
+## reify((x, y, x, (42,)), empty_s)
+#. (_.0, _.1, _.0, (42,))
 
 def reify(val, s):
     """Return val with substitutions applied and any unbound variables
@@ -101,18 +102,21 @@ def walk_full(val, s):
         return val
 
 def name_vars(val):
-    k, s = count(), [empty_s]
+    """Return a substitution renaming all the vars in val to distinct
+    ReifiedVars."""
+    k = count()
     def recur(val):
-        val = walk(val, s[0])
+        val = walk(val, recur.s)
         if is_var(val):
-            s[0] = ext_s_no_check(val, ReifiedVar(next(k)), s[0])
+            recur.s = ext_s_no_check(val, ReifiedVar(next(k)), recur.s)
         elif is_tuple(val):
             for item in val:
                 recur(item)
         else:
             pass
+    recur.s = empty_s
     recur(val)
-    return s[0]
+    return recur.s
 
 def ReifiedVar(k):
     return Var('_.%d' % k)
@@ -123,13 +127,17 @@ def ReifiedVar(k):
 
 def eq(u, v):
     def goal(s):
-        assert s is not None
-        s1 = unify(u, v, s)
-        if s1 is not None: yield s1
+        if s is not None:
+            s = unify(u, v, s)
+            if s is not None:
+                yield s
     return goal
 
 def either(goal1, goal2):
-    return lambda s: interleave((goal1(s), goal2(s)))
+    def goal(s):
+        if s is None: return ()
+        return interleave((goal1(s), goal2(s)))
+    return goal
 
 def interleave(its):
     while its:
@@ -142,22 +150,35 @@ def interleave(its):
 
 def both(goal1, goal2):
     def goal(s):
-        assert s is not None
-        for s1 in goal1(s):
-            for s2 in goal2(s1):
-                yield s2
+        if s is not None:
+            for s1 in goal1(s):
+                if s1 is not None:
+                    for s2 in goal2(s1):
+                        yield s2
     return goal
 
 def fresh(names_string, receiver):
     return receiver(*map(Var, names_string.split()))
 
 def delay(thunk):
-    return lambda s: thunk()(s)
+    def goal(s):
+        if s is not None:
+            yield None          # Keep from hogging the scheduler
+            for s1 in thunk()(s):
+                yield s1
+    return goal
+
+def gen_solutions(var, goal):
+    for s in goal(empty_s):
+        if s is not None:
+            yield reify(var, s)
 
 def run(var, goal, n=None):
-    it = goal(empty_s)
-    for s, _ in zip(it, count() if n is None else xrange(n)):
-        yield reify(var, s)
+    it = gen_solutions(var, goal)
+    if n is None:
+        return list(it)
+    else:
+        return list(islice(it, 0, n))
 
 
 # Examples
@@ -189,4 +210,5 @@ def appendo(x, y, z):
 
 def nevero(): return delay(lambda: nevero())
 
-### list(run(q, either(nevero(), eq(q, "tea")), n=1))
+## list(run(q, either(nevero(), eq(q, "tea")), n=1))
+#. ['tea']
