@@ -151,7 +151,7 @@ def unify(u, v, s):
     v = walk(v, s)
     if u is v:
         return s
-    if is_var(u):
+    elif is_var(u):
         if is_var(v):
             return ext_s_no_check(u, v, s)
         else:
