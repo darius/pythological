@@ -210,10 +210,25 @@ def ReifiedVar(k):
     return Var('_.%d' % k)
 
 
+# Convenience syntax
+
+def cond(conjunction, *conjunctions):
+    goal = conjoin(*conjunction)
+    return either(goal, cond(*conjunctions)) if conjunctions else goal
+
+def conjoin(goal, *goals):
+    return both(goal, conjoin(*goals)) if goals else goal
+
+
 # Examples
 
 def appendo(x, y, z):
     xh, xt, zt = fresh('xh xt zt')
+    return cond([eq((x, y), ((), z))],
+                [eq(x, (xh, xt)),
+                 eq(z, (xh, zt)),
+                 delay(lambda: appendo(xt, y, zt))])
+    # Or better without the sugar?
     return either(eq((x, y), ((), z)),
                   both(eq((x, z), ((xh, xt), (xh, zt))),
                        delay(lambda: appendo(xt, y, zt))))
