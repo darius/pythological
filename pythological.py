@@ -64,10 +64,6 @@ def both(goal1, goal2):
                     yield opt_s2
     return goal
 
-def fresh(names_string, receiver):
-    "Call receiver with fresh new variables."
-    return receiver(*map(Var, names_string.split()))
-
 def delay(thunk):
     """A goal equivalent to thunk() but not quite as prone to hanging
     up the larger computation."""
@@ -94,6 +90,11 @@ class Var(object):
         self.name = name
     def __repr__(self):
         return self.name
+
+def fresh(names_string):
+    "Return fresh new variables."
+    names = names_string.split()
+    return Var(names[0]) if len(names) == 1 else map(Var, names)
 
 # Substitutions
 # data S = () | (Var, Val, S)
@@ -212,18 +213,19 @@ def ReifiedVar(k):
 # Examples
 
 def appendo(x, y, z):
+    xh, xt, zt = fresh('xh xt zt')
     return either(eq((x, y), ((), z)),
-                  fresh('xh xt zt', lambda xh, xt, zt:
-                            both(eq((x, z), ((xh, xt), (xh, zt))),
-                                 delay(lambda: appendo(xt, y, zt)))))
+                  both(eq((x, z), ((xh, xt), (xh, zt))),
+                       delay(lambda: appendo(xt, y, zt))))
 
-## for r in fresh('a b', lambda a, b: appendo(a, b, (1, ())))(empty_s): print show_s(r)
+## a, b = fresh('a b')
+## for r in appendo(a, b, (1, ()))(empty_s): print show_s(r)
 #. b: (1, ())  a: ()
 #. None
 #. b: ()  xt: ()  zt: ()  xh: 1  a: (xh, xt)
 #. 
 
-## q = Var('q')
+## q = fresh('q')
 ## unify((), (), empty_s)
 #. ()
 ## run(q, eq((), ()))
@@ -236,9 +238,9 @@ def appendo(x, y, z):
 #. [_.0]
 ## run(q, appendo((1,()), (), q))
 #. [(1, ())]
-## run(q, fresh('a b', lambda a, b: appendo(a, b, q)), n=5)
+## run(q, appendo(a, b, q), n=5)
 #. [_.0, (_.0, _.1), (_.0, (_.1, _.2)), (_.0, (_.1, (_.2, _.3))), (_.0, (_.1, (_.2, (_.3, _.4))))]
-## for r in run(q, fresh('a b', lambda a, b: both(eq(q, (a, b)), appendo(a, b, (4, (3, (2, (1, ())))))))): print r
+## for r in run(q, both(eq(q, (a, b)), appendo(a, b, (4, (3, (2, (1, ()))))))): print r
 #. ((), (4, (3, (2, (1, ())))))
 #. ((4, ()), (3, (2, (1, ()))))
 #. ((4, (3, ())), (2, (1, ())))
@@ -246,7 +248,7 @@ def appendo(x, y, z):
 #. ((4, (3, (2, (1, ())))), ())
 #. 
 
-## for r in run(q, fresh('a b', lambda a, b: both(eq(q, (a, b)), appendo(a, b, (1, ()))))): print r
+## for r in run(q, both(eq(q, (a, b)), appendo(a, b, (1, ())))): print r
 #. ((), (1, ()))
 #. ((1, ()), ())
 #. 
