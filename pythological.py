@@ -32,10 +32,10 @@ def gen_solutions(var, goal):
 # generator to another goal, you must first check it and skip it if
 # None.)
 
-def eq(u, v):
-    "Succeed when u unifies with v."
+def eq(val1, val2):
+    "Succeed when val1 and val2 unify."
     def goal(s):
-        yield unify(u, v, s)
+        yield unify(val1, val2, s)
     return goal
 
 def either(goal1, goal2):
@@ -144,8 +144,8 @@ def walk(val, s):
     return val
 
 def unify(u, v, s):
-    """Return s plus minimal extensions to make u and v equal mod
-    substitution, if possible; else None."""
+    """Return s plus minimal extensions to make the vals u and v equal
+    mod substitution, if possible; else None."""
     assert is_subst(s)
     u = walk(u, s)
     v = walk(v, s)
