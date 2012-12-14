@@ -30,8 +30,7 @@ def gen_solutions(var, goal):
 
 def eq(val1, val2):
     "Succeed when val1 and val2 unify."
-    def goal(s):
-        yield unify(val1, val2, s)
+    def goal(s): yield unify(val1, val2, s)
     return goal
 
 def either(goal1, goal2):
