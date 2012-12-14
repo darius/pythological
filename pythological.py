@@ -75,9 +75,7 @@ def delay(thunk):
     return goal
 
 
-# Variables, values, and substitutions
-# (var, val, and s, by convention)
-
+# Variables and values (var and val by convention)
 # Val = Var | tuple(Val*) | Atom [any other type, treated as an atom]
 
 def is_var(x):   return isinstance(x, Var)
@@ -96,7 +94,8 @@ def fresh(names_string):
     names = names_string.split()
     return Var(names[0]) if len(names) == 1 else map(Var, names)
 
-# Substitutions
+
+# Substitutions (s by convention)
 # data S = () | (Var, Val, S)
 # Invariant: no transitive cycles in the val for any var. (i.e. take a
 # var in s, and fully expand out its val, substituting for vars: in
