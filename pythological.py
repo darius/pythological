@@ -194,7 +194,7 @@ def ReifiedVar(k):
 # Convenience syntax
 
 def prologly(fresh_names, make_clauses):
-    return lambda *args: case(args, *make_clauses(*fresh(fresh_names)))
+    return lambda *args: case(args, *make_clauses(*map(Var, fresh_names.split())))
 
 def case(subject, *clauses):
     return cond(*[[eq(subject, clause[0])] + clause[1:]
