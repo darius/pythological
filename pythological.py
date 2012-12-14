@@ -187,11 +187,8 @@ def reify(val, s):
             return val
     return walk_full(val)
 
-class ReifiedVar(object):
-    def __init__(self, k):
-        self.name = '_.%d' % k
-    def __repr__(self):
-        return self.name
+def ReifiedVar(k):
+    return Var('_.%d' % k)
 
 
 # Convenience syntax
