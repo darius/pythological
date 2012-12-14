@@ -182,7 +182,7 @@ def reify(val, s):
                 renamings[val] = ReifiedVar(len(renamings))
             return renamings[val]
         elif is_tuple(val):
-            return tuple(reifying(item) for item in val)
+            return tuple(map(reifying, val))
         else:
             return val
     return reifying(val)
