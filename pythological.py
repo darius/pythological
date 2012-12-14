@@ -233,8 +233,10 @@ def old_appendo(x, y, z):
                  eq(z, (xh, zt)),
                  delay(lambda: appendo(xt, y, zt))])
     # Or better without the sugar?
-    return either(eq((x, y), ((), z)),
-                  both(eq((x, z), ((xh, xt), (xh, zt))),
+    return either(eq((x, y),
+                     ((), z)),
+                  both(eq((x, z),
+                          ((xh, xt), (xh, zt))),
                        delay(lambda: appendo(xt, y, zt))))
 
 def appendo(*args):
