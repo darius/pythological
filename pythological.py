@@ -175,17 +175,17 @@ def reify(val, s):
     """Return val with substitutions applied and any unbound variables
     renamed."""
     renamings = {}
-    def walk_full(val):
+    def reifying(val):
         val = walk(val, s)
         if is_var(val):
             if val not in renamings:
                 renamings[val] = ReifiedVar(len(renamings))
             return renamings[val]
         elif is_tuple(val):
-            return tuple(walk_full(item) for item in val)
+            return tuple(reifying(item) for item in val)
         else:
             return val
-    return walk_full(val)
+    return reifying(val)
 
 def ReifiedVar(k):
     return Var('_.%d' % k)
