@@ -47,15 +47,13 @@ def interleave(iters):
         else:                 iters = iters[1:] + (iters[0],)
 
 def both(goal1, goal2):
-    """Succeed when goal1 succeeds and goal2 does too (sharing new
-    substitutions)."""
+    "Succeed when goal1 and goal2 both succeed (sharing new substitutions)."
     return lambda s: (opt_s2 
                       for opt_s1 in goal1(s) if opt_s1 is not None
                       for opt_s2 in goal2(opt_s1))
 
 def delay(thunk):
-    """A goal equivalent to thunk() but not quite as prone to hanging
-    up the larger computation."""
+    "A goal equivalent to thunk() but less prone to hanging up the computation."
     def goal(s):
         # Keep from hogging the scheduler if recursion never yields anything:
         yield None
