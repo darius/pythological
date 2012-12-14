@@ -192,17 +192,17 @@ def name_vars(val):
     """Return a substitution renaming all the vars in val to distinct
     ReifiedVars."""
     k = count()
-    def recur(val, s):
+    def renaming(val, s):
         val = walk(val, s)
         if is_var(val):
             s = ext_s_no_check(val, ReifiedVar(next(k)), s)
         elif is_tuple(val):
             for item in val:
-                s = recur(item, s)
+                s = renaming(item, s)
         else:
             pass
         return s
-    return recur(val, empty_s)
+    return renaming(val, empty_s)
 
 def ReifiedVar(k):
     return Var('_.%d' % k)
