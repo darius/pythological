@@ -174,35 +174,18 @@ def unify(u, v, s):
 def reify(val, s):
     """Return val with substitutions applied and any unbound variables
     renamed."""
-    val = walk_full(val, s)
-    return walk_full(val, name_vars(val))
-
-def walk_full(val, s):
-    """Return val with substitution s fully applied: any variables
-    left are unbound."""
-    val = walk(val, s)
-    if is_var(val):
-        return val
-    elif is_tuple(val):
-        return tuple(walk_full(item, s) for item in val)
-    else:
-        return val
-
-def name_vars(val):
-    """Return a substitution renaming all the vars in val to distinct
-    ReifiedVars."""
-    k = count()
-    def renaming(val, s):
+    renamings = {}
+    def walk_full(val):
         val = walk(val, s)
         if is_var(val):
-            s = ext_s_no_check(val, ReifiedVar(next(k)), s)
+            if val not in renamings:
+                renamings[val] = ReifiedVar(len(renamings))
+            return renamings[val]
         elif is_tuple(val):
-            for item in val:
-                s = renaming(item, s)
+            return tuple(walk_full(item) for item in val)
         else:
-            pass
-        return s
-    return renaming(val, empty_s)
+            return val
+    return walk_full(val)
 
 class ReifiedVar(object):
     def __init__(self, k):
