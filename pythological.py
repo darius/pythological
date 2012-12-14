@@ -98,9 +98,9 @@ def fresh(names_string):
 
 # Substitutions
 # data S = () | (Var, Val, S)
-# Invariant: no transitive cycles in the val for any var. (i.e. expand
-# out a val in s, substituting for vars, and you won't ever run into
-# the val's var.)
+# Invariant: no transitive cycles in the val for any var. (i.e. take a
+# var in s, and fully expand out its val, substituting for vars: in
+# doing so you won't ever run into the same var.)
 
 def is_subst(x): return is_tuple(x) and len(x) in (0, 3)
 
@@ -168,7 +168,7 @@ def unify(u, v, s):
 
 
 # Reifying
-## x, y = Var('x'), Var('y')
+## x, y = fresh('x y')
 ## reify((x, y, x, (42,)), empty_s)
 #. (_.2, _.1, _.2, (42,))
 
@@ -212,6 +212,10 @@ def ReifiedVar(k):
 
 # Convenience syntax
 
+def case(subject, *clauses):
+    return cond(*[[eq(subject, clause[0])] + clause[1:]
+                  for clause in clauses])
+
 def cond(conjunction, *conjunctions):
     goal = conjoin(*conjunction)
     return either(goal, cond(*conjunctions)) if conjunctions else goal
@@ -222,7 +226,7 @@ def conjoin(goal, *goals):
 
 # Examples
 
-def appendo(x, y, z):
+def old_appendo(x, y, z):
     xh, xt, zt = fresh('xh xt zt')
     return cond([eq((x, y), ((), z))],
                 [eq(x, (xh, xt)),
@@ -233,12 +237,29 @@ def appendo(x, y, z):
                   both(eq((x, z), ((xh, xt), (xh, zt))),
                        delay(lambda: appendo(xt, y, zt))))
 
+def appendo(*args):
+    y, z, h, xt, zt = fresh('y z h xt zt')
+    return cond([eq(args, ((), z, z))],
+                [eq(args, ((h, xt), y, (h, zt))),
+                 delay(lambda: appendo(xt, y, zt))])
+
+def appendo(*args):
+    y, h, xt, zt = fresh('y h xt zt')
+    return case(args,
+                [((), y, y)],
+                [((h, xt), y, (h, zt)),
+                 delay(lambda: appendo(xt, y, zt))])
+
+def prologly(freshers, maker):
+    return lambda *args: case(args, *maker(*fresh(freshers)))
+
+appendo = prologly('y h xt zt',
+                   lambda y, h, xt, zt:
+                       ([((), y, y)],
+                        [((h, xt), y, (h, zt)),
+                         delay(lambda: appendo(xt, y, zt))]))
+
 ## a, b = fresh('a b')
-## for r in appendo(a, b, (1, ()))(empty_s): print show_s(r)
-#. b: (1, ())  a: ()
-#. None
-#. b: ()  xt: ()  zt: ()  xh: 1  a: (xh, xt)
-#. 
 
 ## q = fresh('q')
 ## unify((), (), empty_s)
