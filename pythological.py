@@ -212,6 +212,9 @@ def ReifiedVar(k):
 
 # Convenience syntax
 
+def prologly(fresh_names, make_clauses):
+    return lambda *args: case(args, *make_clauses(*fresh(fresh_names)))
+
 def case(subject, *clauses):
     return cond(*[[eq(subject, clause[0])] + clause[1:]
                   for clause in clauses])
@@ -251,9 +254,6 @@ def appendo(*args):
                 [((), y, y)],
                 [((h, xt), y, (h, zt)),
                  delay(lambda: appendo(xt, y, zt))])
-
-def prologly(freshers, maker):
-    return lambda *args: case(args, *maker(*fresh(freshers)))
 
 appendo = prologly('y h xt zt',
                    lambda y, h, xt, zt:
