@@ -227,6 +227,19 @@ def conjoin(goal, *goals):
     return both(goal, conjoin(*goals)) if goals else goal
 
 
+# Debugging
+
+def show_s(opt_s):
+    "Return a more human-readable repr of a substitution."
+    if opt_s is None: return 'None'
+    s = opt_s
+    bindings = []
+    while s is not ():
+        var, val, s = s
+        bindings.append('%s: %s' % (var, val))
+    return '  '.join(bindings)
+
+
 # Examples
 
 def old_appendo(x, y, z):
@@ -290,17 +303,6 @@ appendo = prologly('y h xt zt',
 #. ((), (1, ()))
 #. ((1, ()), ())
 #. 
-
-def show_s(opt_s):
-    "Return a more human-readable repr of a substitution."
-    if opt_s is None: return 'None'
-    s = opt_s
-    bindings = []
-    while s is not ():
-        var, val, s = s
-        bindings.append('%s: %s' % (var, val))
-    return '  '.join(bindings)
-
 
 def nevero(): return delay(lambda: nevero())
 
