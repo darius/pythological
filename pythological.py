@@ -12,15 +12,11 @@ def run(var, goal, n=None):
     """Return a list of reifications of var from the solutions of goal
     (only the first n solutions, if n given)."""
     solns = gen_solutions(var, goal)
-    if n is not None:
-        solns = islice(solns, 0, n)
-    return list(solns)
+    return list(solns if n is None else islice(solns, 0, n))
 
 def gen_solutions(var, goal):
     "Generate the reifications of var from the solutions of goal."
-    for opt_s in goal(empty_s):
-        if opt_s is not None:
-            yield reify(var, opt_s)
+    return (reify(var, opt_s) for opt_s in goal(empty_s) if opt_s is not None)
 
 
 # Goals
@@ -47,22 +43,16 @@ def interleave(iters):
     """Given a tuple of iterators, generate one value from each, in
     order, cyclically until all are exhausted."""
     while iters:
-        try:
-            yield next(iters[0])
-        except StopIteration:
-            iters = iters[1:]
-        else:
-            iters = iters[1:] + (iters[0],)
+        try:                  yield next(iters[0])
+        except StopIteration: iters = iters[1:]
+        else:                 iters = iters[1:] + (iters[0],)
 
 def both(goal1, goal2):
     """Succeed when goal1 succeeds and goal2 does too (sharing new
     substitutions)."""
-    def goal(s):
-        for opt_s1 in goal1(s):
-            if opt_s1 is not None:
-                for opt_s2 in goal2(opt_s1):
-                    yield opt_s2
-    return goal
+    return lambda s: (opt_s2 
+                      for opt_s1 in goal1(s) if opt_s1 is not None
+                      for opt_s2 in goal2(opt_s1))
 
 def delay(thunk):
     """A goal equivalent to thunk() but not quite as prone to hanging
@@ -89,11 +79,6 @@ class Var(object):
     def __repr__(self):
         return self.name
 
-def fresh(names_string):
-    "Return fresh new variables."
-    names = names_string.split()
-    return Var(names[0]) if len(names) == 1 else map(Var, names)
-
 
 # Substitutions (s by convention)
 # data S = () | (Var, Val, S)
@@ -106,13 +91,11 @@ def is_subst(x): return is_tuple(x) and len(x) in (0, 3)
 empty_s = ()
 
 def ext_s_no_check(var, val, s):
-    assert is_subst(s)
     return (var, val, s)
 
 def ext_s(var, val, s):
     """Return s plus (var: val) if possible, else None.
     Pre: var is unbound in s."""
-    assert is_subst(s)
     return None if occurs(var, val, s) else (var, val, s)
 
 def occurs(var, val, s):
@@ -120,17 +103,12 @@ def occurs(var, val, s):
     Pre: var is unbound in s."""
     # Note the top-level walk in the call from unify is redundant
     val = walk(val, s)
-    if is_var(val):
-        return var is val
-    elif is_tuple(val):
-        return any(occurs(var, item, s) for item in val)
-    else:
-        return False
+    return (var is val
+            or (is_tuple(val) and any(occurs(var, item, s) for item in val)))
 
 def walk(val, s):
     """Return val with substitution s applied enough that the result
     is not a bound variable; it's either a non-variable or unbound."""
-    assert is_subst(s)
     while is_var(val):
         s1 = s
         while s1 is not ():
@@ -145,53 +123,44 @@ def walk(val, s):
 def unify(u, v, s):
     """Return s plus minimal extensions to make the vals u and v equal
     mod substitution, if possible; else None."""
-    assert is_subst(s)
     u = walk(u, s)
     v = walk(v, s)
     if u is v:
         return s
     elif is_var(u):
-        if is_var(v):
-            return ext_s_no_check(u, v, s)
-        else:
-            return ext_s(u, v, s)
+        return (ext_s_no_check if is_var(v) else ext_s)(u, v, s)
     elif is_var(v):
         return ext_s(v, u, s)
     elif is_tuple(u) and is_tuple(v) and len(u) == len(v):
-        for x, y in zip(u, v):
-            s = unify(x, y, s)
+        for ui, vi in zip(u, v):
+            s = unify(ui, vi, s)
             if s is None: break
         return s
     else:
         return s if u == v else None
 
-
-# Reifying
-## x, y = fresh('x y')
-## reify((x, y, x, x, (42,)), empty_s)
-#. (_.0, _.1, _.0, _.0, (42,))
-
 def reify(val, s):
-    """Return val with substitutions applied and any unbound variables
-    renamed."""
-    renamings = {}
+    "Return val with substitutions applied and free variables renamed."
+    free_vars = {}
     def reifying(val):
         val = walk(val, s)
         if is_var(val):
-            if val not in renamings:
-                renamings[val] = ReifiedVar(len(renamings))
-            return renamings[val]
+            if val not in free_vars:
+                free_vars[val] = Var('_.%d' % len(free_vars))
+            return free_vars[val]
         elif is_tuple(val):
             return tuple(map(reifying, val))
         else:
             return val
     return reifying(val)
 
-def ReifiedVar(k):
-    return Var('_.%d' % k)
-
 
 # Convenience syntax
+
+def fresh(names_string):
+    "Return fresh new variables."
+    names = names_string.split()
+    return Var(names[0]) if len(names) == 1 else map(Var, names)
 
 def prologly(fresh_names, make_clauses):
     return lambda *args: case(args, *make_clauses(*map(Var, fresh_names.split())))
@@ -296,3 +265,7 @@ def nevero(): return delay(lambda: nevero())
 ## q, x = Var('q'), Var('x')
 ## walk(x, (q, 5, (x, q, ())))
 #. 5
+
+## x, y = fresh('x y')
+## reify((x, y, x, x, (42,)), empty_s)
+#. (_.0, _.1, _.0, _.0, (42,))
