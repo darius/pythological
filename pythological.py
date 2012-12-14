@@ -154,13 +154,13 @@ def reify(val, s):
 
 # Convenience syntax
 
-def fresh(names_string):
+def fresh(names_str):
     "Return fresh new variables."
-    names = names_string.split()
+    names = names_str.split()
     return Var(names[0]) if len(names) == 1 else map(Var, names)
 
-def prologly(fresh_names, make_clauses):
-    return lambda *args: case(args, *make_clauses(*map(Var, fresh_names.split())))
+def prologly(names_str, make_clauses):
+    return lambda *args: case(args, *make_clauses(*map(Var, names_str.split())))
 
 def case(subject, *clauses):
     return cond(*[[eq(subject, clause[0])] + clause[1:]
