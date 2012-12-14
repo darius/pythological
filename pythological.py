@@ -11,10 +11,10 @@ from itertools import count, islice
 def run(var, goal, n=None):
     """Return a list of reifications of var from the solutions of goal
     (only the first n solutions, if n given)."""
-    it = gen_solutions(var, goal)
+    solns = gen_solutions(var, goal)
     if n is not None:
-        it = islice(it, 0, n)
-    return list(it)
+        solns = islice(solns, 0, n)
+    return list(solns)
 
 def gen_solutions(var, goal):
     "Generate the reifications of var from the solutions of goal."
@@ -43,16 +43,16 @@ def either(goal1, goal2):
     new substitutions between the two)."""
     return lambda s: interleave((goal1(s), goal2(s)))
 
-def interleave(its):
+def interleave(iters):
     """Given a tuple of iterators, generate one value from each, in
     order, cyclically until all are exhausted."""
-    while its:
+    while iters:
         try:
-            yield next(its[0])
+            yield next(iters[0])
         except StopIteration:
-            its = its[1:]
+            iters = iters[1:]
         else:
-            its = its[1:] + (its[0],)
+            iters = iters[1:] + (iters[0],)
 
 def both(goal1, goal2):
     """Succeed when goal1 succeeds and goal2 does too (sharing new
@@ -192,18 +192,17 @@ def name_vars(val):
     """Return a substitution renaming all the vars in val to distinct
     ReifiedVars."""
     k = count()
-    def recur(val):
-        val = walk(val, recur.s)
+    def recur(val, s):
+        val = walk(val, s)
         if is_var(val):
-            recur.s = ext_s_no_check(val, ReifiedVar(next(k)), recur.s)
+            s = ext_s_no_check(val, ReifiedVar(next(k)), s)
         elif is_tuple(val):
             for item in val:
-                recur(item)
+                s = recur(item, s)
         else:
             pass
-    recur.s = empty_s
-    recur(val)
-    return recur.s
+        return s
+    return recur(val, empty_s)
 
 def ReifiedVar(k):
     return Var('_.%d' % k)
