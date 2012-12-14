@@ -168,8 +168,8 @@ def unify(u, v, s):
 
 # Reifying
 ## x, y = fresh('x y')
-## reify((x, y, x, (42,)), empty_s)
-#. (_.2, _.1, _.2, (42,))
+## reify((x, y, x, x, (42,)), empty_s)
+#. (_.0, _.1, _.0, _.0, (42,))
 
 def reify(val, s):
     """Return val with substitutions applied and any unbound variables
@@ -204,8 +204,11 @@ def name_vars(val):
         return s
     return renaming(val, empty_s)
 
-def ReifiedVar(k):
-    return Var('_.%d' % k)
+class ReifiedVar(object):
+    def __init__(self, k):
+        self.name = '_.%d' % k
+    def __repr__(self):
+        return self.name
 
 
 # Convenience syntax
