@@ -6,8 +6,8 @@ Sketch of a friendly syntax frontend.
 #. ('Append(Nil(ys, ys)) :- true', 'Append(Cons(x, xs), ys, Cons(x, zs)) :- Append(xs, ys, zs)', 'Member(x, Cons(x, _)) :- true', 'Member(x, Cons(_, xs)) :- Member(x, xs)')
 
 ## for x in grammar.program(zebra): print x
-#. Zebra(owns, hs) :- LeftMiddle(hs), Left_of(H(Green(_, _, Coffee(_))), H(White(_, _, _, _)), hs), Next_to(H(_, _, _, _, Blend()), H(_, _, Cats(_, _)), hs), Next_to(H(_, _, _, _, Dunhill()), H(_, _, Horse(_, _)), hs), Next_to(H(_, Norwegian(_, _, _)), H(Blue(_, _, _, _)), hs), Next_to(H(_, _, _, _, Blend()), H(_, _, _, Water(_)), hs), Member(H(Red(English(_, _, _))), hs), Member(H(_, Swede(Dog(_, _))), hs), Member(H(_, Dane(_, Tea(_))), hs), Member(H(_, _, Birds(_, Pallmall())), hs), Member(H(Yellow(_, _, _, Dunhill())), hs), Member(H(_, _, _, Beer(Bluemaster())), hs), Member(H(_, German(_, _, Prince())), hs), Member(H(_, owns, Zebra(_, _)), hs)
-#. LeftMiddle(Cons(H(_, Norwegian(_, _, _)), Cons(_, Cons(H(_, _, _, Milk(_)), Cons(_, Cons(_, Nil())))))) :- true
+#. Zebra(owns, hs) :- Left_and_middle(hs), Left_of(H(Green(_, _, Coffee(_))), H(White(_, _, _, _)), hs), Next_to(H(_, _, _, _, Blend()), H(_, _, Cats(_, _)), hs), Next_to(H(_, _, _, _, Dunhill()), H(_, _, Horse(_, _)), hs), Next_to(H(_, Norwegian(_, _, _)), H(Blue(_, _, _, _)), hs), Next_to(H(_, _, _, _, Blend()), H(_, _, _, Water(_)), hs), Member(H(Red(English(_, _, _))), hs), Member(H(_, Swede(Dog(_, _))), hs), Member(H(_, Dane(_, Tea(_))), hs), Member(H(_, _, Birds(_, Pallmall())), hs), Member(H(Yellow(_, _, _, Dunhill())), hs), Member(H(_, _, _, Beer(Bluemaster())), hs), Member(H(_, German(_, _, Prince())), hs), Member(H(_, owns, Zebra(_, _)), hs)
+#. Left_and_middle(Cons(H(_, Norwegian(_, _, _)), Cons(_, Cons(H(_, _, _, Milk(_)), Cons(_, Cons(_, Nil())))))) :- true
 #. Next_to(a, b, c) :- Left_of(a, b, c)
 #. Next_to(a, b, c) :- Left_of(b, a, c)
 #. Left_of(a, b, c) :- Append(_, Cons(a, Cons(b, _)), c)
@@ -23,7 +23,7 @@ Member x (Cons _ xs) <- Member x xs.
 
 zebra = """
 Zebra owns hs <-
-      LeftMiddle hs,
+      Left_and_middle hs,
       Left_of (H Green _ _ Coffee _)    (H White _ _ _ _)  hs,
       Next_to (H _ _ _ _ Blend)         (H _ _ Cats  _ _)  hs,
       Next_to (H _ _ _ _ Dunhill)       (H _ _ Horse _ _)  hs,
@@ -38,7 +38,11 @@ Zebra owns hs <-
       Member  (H _ German _ _ Prince)   hs,
       Member  (H _ owns Zebra _ _)      hs.
 
-LeftMiddle (Cons (H _ Norwegian _ _ _) (Cons _ (Cons (H _ _ _ Milk _) (Cons _ (Cons _ Nil))))).
+Left_and_middle (Cons (H _ Norwegian _ _ _)
+                 (Cons _
+                  (Cons (H _ _ _ Milk _)
+                   (Cons _
+                    (Cons _ Nil))))).
 
 Next_to a b c <- Left_of a b c.
 Next_to a b c <- Left_of b a c.
@@ -52,20 +56,20 @@ from pythological import run, eq, either, both, delay, Var
 grammar = Grammar(r"""
 program = _ rule* ~/./.
 
-rule = call '<-'_ predicates '.'_   :mk_rule
-     | call                  '.'_   :mk_fact.
+rule = predicate '<-'_ calls '.'_   :mk_rule
+     | predicate             '.'_   :mk_fact.
 
-predicates = predicate (','_ predicate)*   :hug.
+predicate = symbol term*   :mk_predicate.
 
-predicate = call.
+calls = call (','_ call)*   :hug.
 
 call = symbol term*   :mk_call.
 
 term = '('_ term ')'_
-     | variable
+     | variable       :mk_variable
      | symbol term*   :mk_call  # XXX
-     | number
-     | string.
+     | number         :mk_literal
+     | string         :mk_literal.
 
 variable = /([a-z_]\w*)/_.
 symbol = /([A-Z]\w*)/_.
@@ -78,7 +82,10 @@ _ = /\s*/.
 """)(mk_fact = lambda predicate: '%s :- true' % predicate,
      mk_rule = lambda predicate, body: '%s :- %s' % (predicate, ', '.join(body)),
      mk_call = lambda symbol, *terms: '%s(%s)' % (symbol, ', '.join(terms)),
-     mk_string = repr,
+     mk_predicate = lambda symbol, *terms: '%s(%s)' % (symbol, ', '.join(terms)),
+     mk_literal = lambda s: s,
+     mk_variable = lambda s: s,
+     mk_string = lambda s: s,
      int = int,
      join = join,
      hug = hug)
