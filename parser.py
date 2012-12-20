@@ -78,7 +78,7 @@ anonvar  = /(_\w*)/_.
 
 number = /(\d+)/_   :int.   # TODO more
 
-string = '"' qchar* '"'_  :join :mk_string.
+string = '"' qchar* '"'_  :join.
 qchar = /[^"]/.  # TODO more
 
 _ = /\s*/.
@@ -90,7 +90,7 @@ _ = /\s*/.
      mk_literal   = lambda s: s,
      mk_variable  = lambda s: s,
      mk_anon      = lambda s: s,
-     mk_string    = lambda s: s,
      int = int,
      join = join,
      hug = hug)
+
