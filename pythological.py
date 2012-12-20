@@ -221,9 +221,18 @@ appendo = prologly('y h xt zt',
                         [((h, xt), y, (h, zt)),
                          delay(lambda: appendo(xt, y, zt))]))
 
-## a, b = fresh('a b')
+membero = prologly('x t _',
+                   lambda x, t, _:
+                       ([(x, (x, _))],
+                        [(x, (_, t)),
+                         delay(lambda: membero(x, t))]))
 
 ## q = fresh('q')
+## a, b = fresh('a b')
+
+## run(q, membero(q, (b, (a, ()))))
+#. [_.0, _.0]
+
 ## unify((), (), empty_s)
 #. ()
 ## run(q, eq((), ()))
