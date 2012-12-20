@@ -28,6 +28,12 @@ def gen_solutions(var, goal):
 # generator to another goal, you must first check it and skip it if
 # None.)
 
+def fail(s):
+    if False: yield s
+
+def succeed(s):
+    yield s
+
 def eq(val1, val2):
     "Succeed when val1 and val2 unify."
     def goal(s): yield unify(val1, val2, s)
