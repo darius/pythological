@@ -66,15 +66,18 @@ calls = call (','_ call)*   :hug.
 call = symbol term*   :mk_call.
 
 term = '('_ term ')'_
+     | symbol term*   :mk_compound
      | variable       :mk_variable
-     | symbol term*   :mk_call  # XXX
+     | anonvar        :mk_anon
      | number         :mk_literal
      | string         :mk_literal.
 
-variable = /([a-z_]\w*)/_.
-symbol = /([A-Z]\w*)/_.
+symbol   = /([A-Z]\w*)/_.
+variable = /([a-z]\w*)/_.
+anonvar  = /(_\w*)/_.
 
 number = /(\d+)/_   :int.   # TODO more
+
 string = '"' qchar* '"'_  :join :mk_string.
 qchar = /[^"]/.  # TODO more
 
@@ -83,8 +86,10 @@ _ = /\s*/.
      mk_rule = lambda predicate, body: '%s :- %s' % (predicate, ', '.join(body)),
      mk_call = lambda symbol, *terms: '%s(%s)' % (symbol, ', '.join(terms)),
      mk_predicate = lambda symbol, *terms: '%s(%s)' % (symbol, ', '.join(terms)),
+     mk_compound = lambda symbol, *terms: '%s(%s)' % (symbol, ', '.join(terms)),
      mk_literal = lambda s: s,
      mk_variable = lambda s: s,
+     mk_anon = lambda s: s,
      mk_string = lambda s: s,
      int = int,
      join = join,
