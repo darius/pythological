@@ -183,17 +183,3 @@ def foldr(f, z, xs):
     for x in reversed(xs):
         z = f(x, z)
     return z
-
-
-
-## parser.term('42')
-#. ((set([]), <function <lambda> at 0xffea99cc>),)
-## parser.term('x')
-#. ((set(['x']), <function <lambda> at 0xffea99cc>),)
-## parser.term('H x')
-#. ((set(['x']), <function <lambda> at 0xffe8dfb4>),)
-## parser.term('H x y')
-#. ((set(['y', 'x']), <function <lambda> at 0xffe8df44>),)
-
-## set().union(*[set(['x']), set(['y'])])
-#. set(['y', 'x'])
