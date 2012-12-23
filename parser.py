@@ -109,54 +109,51 @@ def mk_program(rules):
     program = collect_rules(rules)
     return program['Main']
 
-def collect_rules(rules):
-    rule_fvs = collections.defaultdict(set)
-    rule_clauses = collections.defaultdict(list)
-    for name, fvs, ev in rules:
-        rule_fvs[name].update(fvs)
-        rule_clauses[name].append(ev)
-    def make_function(name):
-        fvs = rule_fvs[name]
-        evs = rule_clauses[name]
+def collect_rules(rules_tuple):
+    rules = collections.defaultdict(list)
+    for symbol, fvs, ev in rules_tuple:
+        rules[symbol].append((fvs, ev))
+    def make_function(symbol, pairs):
+        fvs, ev = collect(pairs)
         def fn(*args):
             variables = dict((name, Var(name)) for name in fvs)
-            return foldr(either, fail, [ev(program, args, variables)
-                                        for ev in evs])
+            return foldr(either, fail, ev(program, args, variables))
         return fn
-    program = dict((name, make_function(name))
-                   for name in rule_clauses)
+    program = dict((symbol, make_function(symbol, pairs))
+                   for symbol, pairs in rules.items())
     return program
 
+def collect(pairs):
+    fvs = set().union(*[fvs for fvs, _ in pairs])
+    evs = [ev for _, ev in pairs]
+    return fvs, (lambda program, args, variables:
+                     tuple(ev(program, args, variables) for ev in evs))
+    
 def mk_rule(predicate, calls):
-    name, head_fvs, head_ev = predicate
-    fvs = head_fvs.union(*[fvs for fvs, _ in calls])
-    evs_body = [ev for _, ev in calls]
-    return name, fvs, (lambda program, args, variables:
-                           both(eq(args, head_ev(program, args, variables)),
-                                foldr(both, succeed,
-                                      [ev(program, args, variables)
-                                       for ev in evs_body])))
+    symbol, head_fvs, head_ev = predicate
+    call_fvs, ev_calls = collect(calls)
+    fvs = head_fvs | call_fvs
+    return symbol, fvs, (lambda program, args, variables:
+                          both(eq(args, head_ev(program, args, variables)),
+                               foldr(both, succeed, ev_calls(program,
+                                                             args,
+                                                             variables))))
 
 def mk_predicate(symbol, *terms):
-    fvs = set().union(*[fvs for fvs, _ in terms])
-    evs = [ev for _, ev in terms]
-    return symbol, fvs, (lambda program, args, variables:
-                             tuple(ev(program, args, variables)
-                                   for ev in evs))
-                     
+    fvs, ev_terms = collect(terms)
+    return symbol, fvs, ev_terms
+
 def mk_call(symbol, *terms):
-    fvs = set().union(*[fvs for fvs, _ in terms])
-    evs = [ev for _, ev in terms]
+    fvs, ev_terms = collect(terms)
     return fvs, (lambda program, args, variables:
-                     delay(lambda: program[symbol](*[ev(program, args, variables)
-                                                     for ev in evs])))
+                     delay(lambda: program[symbol](*ev_terms(program,
+                                                             args,
+                                                             variables))))
 
 def mk_compound(symbol, *terms):
-    fvs = set().union(*[fvs for fvs, _ in terms])
-    evs = [ev for _, ev in terms]
+    fvs, ev_terms = collect(terms)
     return fvs, (lambda program, args, variables:
-                     (symbol,) + tuple(ev(program, args, variables)
-                                       for ev in evs))
+                     (symbol,) + ev_terms(program, args, variables))
 
 def mk_literal(value):
     return set(), lambda program, args, variables: value
