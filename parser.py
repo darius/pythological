@@ -30,8 +30,7 @@ Sketch of a friendly syntax frontend.
 #. [_.0]
 ## test('Member', q, ('Cons', 22, ('Cons', 137, ())))
 #. [22, 137]
-## run(q, both(eq(q, (a, b)), program['Zebra'](a, b)))
-#. []
+### run(q, both(eq(q, (a, b)), program['Zebra'](a, b)))
 
 example = """
 Append Nil ys ys.
@@ -86,8 +85,8 @@ calls = call (','_ call)*   :hug.
 
 call = symbol term*   :mk_call.
 
-term = '('_ term ')'_
-     | symbol term*   :mk_compound
+term = '('_ symbol term* ')'_  :mk_compound
+     | symbol         :mk_compound
      | variable       :mk_variable
      | anonvar        :mk_anon
      | number         :mk_literal
@@ -104,6 +103,9 @@ qchar = /[^"]/.  # TODO more
 
 _ = /\s*/.
 """
+
+def parse(string):
+    return collect_rules(parser.program(string))
 
 def mk_program(rules):
     program = collect_rules(rules)
