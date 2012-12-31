@@ -22,14 +22,14 @@ def gen_solutions(var, goal):
 # Goals
 
 # A goal is a function from substitution to generator. Each value we
-# generate is an optional substitution, that is: a substitution or
+# generate is an optional substitution -- that is, a substitution or
 # None. The option of None gives a way to "yield your timeslice" from
 # an unproductive subcomputation. (So to feed a result opt_s from one
 # generator to another goal, you must first check it and skip it if
 # None.)
 
 def fail(s):
-    if False: yield s
+    return iter(())
 
 def succeed(s):
     yield s
