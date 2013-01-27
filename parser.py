@@ -2,34 +2,20 @@
 Sketch of a friendly syntax frontend.
 """
 
-## for name, fvs, _ in parser.program(example): print name, ' '.join(sorted(fvs))
-#. Append ys
-#. Append x xs ys zs
-#. Member x
-#. Member x xs
-#. Main hs owns
-#. Zebra hs owns
-#. Left_and_middle 
-#. Next_to a b c
-#. Next_to a b c
-#. Left_of a b c
-#. 
-
 ## from pythological import fresh, run
-## q, a, b = fresh('q a b')
-## def test(name, *args): return run(q, program[name](*args))
-## program = mk_program(parser.program(example))
 ## program = collect_rules(parser.program(example))
 ## program.keys()
 #. ['Next_to', 'Left_of', 'Member', 'Zebra', 'Main', 'Left_and_middle', 'Append']
-## test('Member', q, ())
+## program.query('Member q Nil')
 #. []
-## test('Member', q, ('Cons', 5, ()))
-#. [5]
-## test('Member', q, ('Cons', a, ()))
-#. [_.0]
-## test('Member', q, ('Cons', 22, ('Cons', 137, ())))
-#. [22, 137]
+## program.query('Member x (Cons 5 Nil)')
+#. [{'x': 5}]
+## program.query('Member x (Cons a Nil)')
+#. [{'a': _.0, 'x': _.0}]
+## program.query('Member x (Cons 22 (Cons 137 Nil))')
+#. [{'x': 22}, {'x': 137}]
+## program.query('Member x a', n=3)
+#. [{'a': ('Cons', _.0, _.1), 'x': _.0}, {'a': ('Cons', _.0, ('Cons', _.1, _.2)), 'x': _.1}, {'a': ('Cons', _.0, ('Cons', _.1, ('Cons', _.2, _.3))), 'x': _.2}]
 ### run(q, both(eq(q, (a, b)), program['Zebra'](a, b)))
 
 example = """
@@ -75,6 +61,7 @@ from pythological import run, Var, fail, succeed, eq, either, both, delay
 
 grammar = r"""
 program = _ rule* ~/./.
+query = _ call ~/./.
 
 rule = predicate '<-'_ calls '.'_   :mk_rule
      | predicate             '.'_   :mk_fact.
@@ -101,8 +88,18 @@ number = /(\d+)/_   :int.   # TODO more
 string = '"' qchar* '"'_  :join.
 qchar = /[^"]/.  # TODO more
 
-_ = /\s*/.
+_ = /\s*/.   # TODO comments
 """
+
+class Program(dict):
+    def query(self, string, n=None):
+        (fvs, ev), = parser.query(string)
+        variables = tuple(map(Var, fvs))
+        q = Var('q')
+        results = run(q, both(eq(q, variables),
+                              ev(self, (), dict(zip(fvs, variables)))),
+                      n=n)
+        return [dict(zip(fvs, result)) for result in results]
 
 def parse(string):
     return collect_rules(parser.program(string))
@@ -121,8 +118,8 @@ def collect_rules(rules_tuple):
             variables = dict((name, Var(name)) for name in fvs)
             return foldr(either, fail, ev(program, args, variables))
         return fn
-    program = dict((symbol, make_function(symbol, pairs))
-                   for symbol, pairs in rules.items())
+    program = Program((symbol, make_function(symbol, pairs))
+                      for symbol, pairs in rules.items())
     return program
 
 def collect(pairs):
