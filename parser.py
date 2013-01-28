@@ -68,8 +68,7 @@ rule = predicate '<-'_ calls '.'_   :mk_rule
 
 predicate = symbol term*   :mk_predicate.
 
-calls = call (','_ call)*   :hug.
-
+calls = call (','_ call)*   :mk_calls.
 call = symbol term*   :mk_call.
 
 term = '('_ symbol term* ')'_  :mk_compound
@@ -130,17 +129,23 @@ def collect(pairs):
     
 def mk_rule(predicate, calls):
     symbol, head_fvs, head_ev = predicate
-    call_fvs, ev_calls = collect(calls)
+    call_fvs, ev_calls = calls
     fvs = head_fvs | call_fvs
     return symbol, fvs, (lambda program, args, variables:
                           both(eq(args, head_ev(program, args, variables)),
-                               foldr(both, succeed, ev_calls(program,
-                                                             args,
-                                                             variables))))
+                               ev_calls(program, args, variables)))
+
+def mk_fact(predicate):
+    return mk_rule(predicate, mk_calls())
 
 def mk_predicate(symbol, *terms):
     fvs, ev_terms = collect(terms)
     return symbol, fvs, ev_terms
+
+def mk_calls(*pairs):
+    fvs, ev = collect(pairs)
+    return fvs, (lambda program, args, variables:
+                     foldr(both, succeed, ev(program, args, variables)))
 
 def mk_call(symbol, *terms):
     fvs, ev_terms = collect(terms)
@@ -163,9 +168,10 @@ def mk_anon(name):
 def mk_variable(name):
     return set([name]), lambda program, args, variables: variables[name]
 
-parser = Grammar(grammar)(mk_fact      = lambda predicate: mk_rule(predicate, []),
+parser = Grammar(grammar)(mk_fact      = mk_fact,
                           mk_rule      = mk_rule,
                           mk_predicate = mk_predicate,
+                          mk_calls     = mk_calls,
                           mk_call      = mk_call,
                           mk_compound  = mk_compound,
                           mk_literal   = mk_literal,
