@@ -16,6 +16,8 @@ Sketch of a friendly syntax frontend.
 #. [{'x': 22}, {'x': 137}]
 ## program.query('Member x a', n=3)
 #. [{'a': ('Cons', _.0, _.1), 'x': _.0}, {'a': ('Cons', _.0, ('Cons', _.1, _.2)), 'x': _.1}, {'a': ('Cons', _.0, ('Cons', _.1, ('Cons', _.2, _.3))), 'x': _.2}]
+## program.query('Member x (Cons 5 (Cons 7 Nil)), Member x (Cons 7 (Cons 8 Nil))')
+#. [{'x': 7}]
 ### run(q, both(eq(q, (a, b)), program['Zebra'](a, b)))
 
 example = """
@@ -61,7 +63,7 @@ from pythological import run, Var, fail, succeed, eq, either, both, delay
 
 grammar = r"""
 program = _ rule* ~/./.
-query = _ call ~/./.
+query = _ calls ~/./.
 
 rule = predicate '<-'_ calls '.'_   :mk_rule
      | predicate             '.'_   :mk_fact.
