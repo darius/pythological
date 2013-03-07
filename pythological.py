@@ -1,5 +1,6 @@
 """
 A port of core miniKanren to Python from William Byrd's dissertation chapter 3.
+https://scholarworks.iu.edu/dspace/bitstream/handle/2022/8777/Byrd_indiana_0093A_10344.pdf
 The goal part doesn't try to follow him in any detail, using Python generators
 instead.
 """
