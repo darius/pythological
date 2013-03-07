@@ -93,10 +93,10 @@ def is_subst(x): return is_tuple(x) and len(x) in (0, 3)
 
 empty_s = ()
 
-def ext_s_no_check(var, val, s):
+def extend_unchecked(var, val, s):
     return (var, val, s)
 
-def ext_s(var, val, s):
+def extend(var, val, s):
     """Return s plus (var: val) if possible, else None.
     Pre: var is unbound in s."""
     return None if occurs(var, val, s) else (var, val, s)
@@ -131,9 +131,9 @@ def unify(u, v, s):
     if u is v:
         return s
     elif is_var(u):
-        return (ext_s_no_check if is_var(v) else ext_s)(u, v, s)
+        return (extend_unchecked if is_var(v) else extend)(u, v, s)
     elif is_var(v):
-        return ext_s(v, u, s)
+        return extend(v, u, s)
     elif is_tuple(u) and is_tuple(v) and len(u) == len(v):
         for ui, vi in zip(u, v):
             s = unify(ui, vi, s)
