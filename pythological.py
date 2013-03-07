@@ -105,12 +105,12 @@ def extend(var, val, s):
 def occurs(var, val, s):
     """Would adding (var: val) to s introduce a cycle?
     Pre: var is unbound in s."""
-    # Note the top-level walk in the call from unify is redundant
-    val = walk(val, s)
+    # Note the top-level substitute in the call from unify is redundant
+    val = substitute(val, s)
     return (var is val
             or (is_tuple(val) and any(occurs(var, item, s) for item in val)))
 
-def walk(val, s):
+def substitute(val, s):
     """Return val with substitution s applied enough that the result
     is not a bound variable; it's either a non-variable or unbound."""
     while is_var(val):
@@ -127,8 +127,8 @@ def walk(val, s):
 def unify(u, v, s):
     """Return s plus minimal extensions to make the vals u and v equal
     mod substitution, if possible; else None."""
-    u = walk(u, s)
-    v = walk(v, s)
+    u = substitute(u, s)
+    v = substitute(v, s)
     if u is v:
         return s
     elif is_var(u):
@@ -147,7 +147,7 @@ def reify(val, s):
     "Return val with substitutions applied and free variables renamed."
     free_vars = {}
     def reifying(val):
-        val = walk(val, s)
+        val = substitute(val, s)
         if is_var(val):
             if val not in free_vars:
                 free_vars[val] = Var('_.%d' % len(free_vars))
@@ -276,7 +276,7 @@ def nevero(): return delay(lambda: nevero())
 #. [None, None, None, None, None]
 
 ## q, x = Var('q'), Var('x')
-## walk(x, (q, 5, (x, q, ())))
+## substitute(x, (q, 5, (x, q, ())))
 #. 5
 
 ## x, y = fresh('x y')
