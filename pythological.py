@@ -7,6 +7,7 @@ instead.
 
 from itertools import islice
 
+
 # Top level
 
 def run(var, goal, n=None):
