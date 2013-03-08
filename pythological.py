@@ -5,7 +5,7 @@ The goal part doesn't try to follow him in any detail, using Python generators
 instead.
 """
 
-from itertools import count, islice
+from itertools import islice
 
 # Top level
 
