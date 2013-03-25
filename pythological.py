@@ -115,15 +115,18 @@ def substitute(val, s):
     """Return val with substitution s applied enough that the result
     is not a bound variable; it's either a non-variable or unbound."""
     while is_var(val):
-        s1 = s
-        while s1 is not ():
-            var1, val1, s1 = s1
+        for var1, val1 in substitutions(s):
             if var1 is val:
                 val = val1
                 break
         else:
             break
     return val
+
+def substitutions(s):
+    while s is not ():
+        var, val, s = s
+        yield var, val
 
 def unify(u, v, s):
     """Return s plus minimal extensions to make the vals u and v equal
@@ -186,13 +189,9 @@ def conjoin(goal, *goals):
 
 def show_s(opt_s):
     "Return a more human-readable repr of a substitution."
-    if opt_s is None: return 'None'
-    s = opt_s
-    bindings = []
-    while s is not ():
-        var, val, s = s
-        bindings.append('%s: %s' % (var, val))
-    return '  '.join(bindings)
+    return ('None' if opt_s is None
+            else '  '.join('%r: %r' % (var, val)
+                           for var, val in substitutions(opt_s)))
 
 
 # Examples
