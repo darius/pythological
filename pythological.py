@@ -112,12 +112,12 @@ def occurs(var, val, s):
             or (is_tuple(val) and any(occurs(var, item, s) for item in val)))
 
 def substitute(val, s):
-    """Return val with substitution s applied enough that the result
+    """Return val filled out by substitution s enough that the result
     is not a bound variable; it's either a non-variable or unbound."""
     while is_var(val):
-        for var1, val1 in substitutions(s):
-            if var1 is val:
-                val = val1
+        for svar, sval in substitutions(s):
+            if val is svar:
+                val = sval
                 break
         else:
             break
