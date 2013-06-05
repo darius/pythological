@@ -6,22 +6,25 @@ Sketch of a friendly syntax frontend.
 ## program = collect_rules(parser.program(example))
 ## program.keys()
 #. ['Next_to', 'Left_of', 'Member', 'Zebra', 'Main', 'Left_and_middle', 'Append']
-## program.query('Member q Nil')
+## program.query('Member q []')
 #. []
-## program.query('Member x (Cons 5 Nil)')
+## program.query('Member x (Cons 5 [])')
 #. [{'x': 5}]
-## program.query('Member x (Cons a Nil)')
+## program.query('Member x [5]')
+#. [{'x': 5}]
+## program.query('Member x [a]')
 #. [{'a': _.0, 'x': _.0}]
-## program.query('Member x (Cons 22 (Cons 137 Nil))')
+## program.query('Member x [22, 137]')
 #. [{'x': 22}, {'x': 137}]
 ## program.query('Member x a', n=3)
 #. [{'a': ('Cons', _.0, _.1), 'x': _.0}, {'a': ('Cons', _.0, ('Cons', _.1, _.2)), 'x': _.1}, {'a': ('Cons', _.0, ('Cons', _.1, ('Cons', _.2, _.3))), 'x': _.2}]
-## program.query('Member x (Cons 5 (Cons 7 Nil)), Member x (Cons 7 (Cons 8 Nil))')
+## program.query('Member x [5, 7], Member x [7, 8]')
 #. [{'x': 7}]
 ### run(q, both(eq(q, (a, b)), program['Zebra'](a, b)))
 
+
 example = """
-Append Nil ys ys.
+Append [] ys ys.
 Append (Cons x xs) ys (Cons x zs) <- Append xs ys zs.
 
 Member x (Cons x _).
@@ -45,11 +48,7 @@ Zebra owns hs <-
     Member  (H _ German _ _ Prince)   hs,
     Member  (H _ owns Zebra _ _)      hs.
 
-Left_and_middle (Cons (H _ Norwegian _ _ _)
-                 (Cons _
-                  (Cons (H _ _ _ Milk _)
-                   (Cons _
-                    (Cons _ Nil))))).
+Left_and_middle [(H _ Norwegian _ _ _), _, (H _ _ _ Milk _), _, _].
 
 Next_to a b c <- Left_of a b c.
 Next_to a b c <- Left_of b a c.
@@ -74,11 +73,15 @@ calls = call (','_ call)*   :mk_calls.
 call = symbol term*   :mk_call.
 
 term = '('_ symbol term* ')'_  :mk_compound
+     | '['_ elements ']'_      :mk_list   # XXX what about ([])?
      | symbol         :mk_compound
      | variable       :mk_variable
      | anonvar        :mk_anon
      | number         :mk_literal
      | string         :mk_literal.
+
+elements = term (','_ term)*
+         | .
 
 symbol   = /([A-Z]\w*)/_.
 variable = /([a-z]\w*)/_.
@@ -156,6 +159,17 @@ def mk_call(symbol, *terms):
                                                              args,
                                                              variables))))
 
+def mk_list(*terms):
+    return foldr(cons, nil, terms)
+
+nil = (set(), lambda program, args, variables: ('Nil',))
+
+def cons((h_fvs, h_fn), (t_fvs, t_fn)):
+    return h_fvs | t_fvs, (lambda program, args, variables:
+                             ('Cons',
+                              h_fn(program, args, variables),
+                              t_fn(program, args, variables)))
+
 def mk_compound(symbol, *terms):
     fvs, ev_terms = collect(terms)
     return fvs, (lambda program, args, variables:
@@ -175,6 +189,7 @@ parser = Grammar(grammar)(mk_fact      = mk_fact,
                           mk_predicate = mk_predicate,
                           mk_calls     = mk_calls,
                           mk_call      = mk_call,
+                          mk_list      = mk_list,
                           mk_compound  = mk_compound,
                           mk_literal   = mk_literal,
                           mk_variable  = mk_variable,
