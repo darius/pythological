@@ -16,8 +16,11 @@ Sketch of a friendly syntax frontend.
 #. [{'a': _.0, 'x': _.0}]
 ## program.query('Member x [22, 137]')
 #. [{'x': 22}, {'x': 137}]
-## program.query('Member x a', n=3)
-#. [{'a': ('Cons', _.0, _.1), 'x': _.0}, {'a': ('Cons', _.0, ('Cons', _.1, _.2)), 'x': _.1}, {'a': ('Cons', _.0, ('Cons', _.1, ('Cons', _.2, _.3))), 'x': _.2}]
+## for res in program.query('Member x a', n=3): print res['x'], unparse(res['a'])
+#. _.0 (Cons _.0 _.1)
+#. _.1 (Cons _.0 (Cons _.1 _.2))
+#. _.2 (Cons _.0 (Cons _.1 (Cons _.2 _.3)))
+#. 
 ## program.query('Member x [5, 7], Member x [7, 8]')
 #. [{'x': 7}]
 ### run(q, both(eq(q, (a, b)), program['Zebra'](a, b)))
@@ -202,3 +205,25 @@ def foldr(f, z, xs):
     for x in reversed(xs):
         z = f(x, z)
     return z
+
+def unparse(term):
+    if not isinstance(term, tuple):
+        return str(term)
+    elif is_proper_list(term):
+        return '[%s]' % ', '.join(map(unparse, list_elements(term)))
+    elif not term[1:]:
+        return term[0]
+    else:
+        return '(%s%s)' % (term[0],
+                           ''.join(' ' + unparse(arg) for arg in term[1:]))
+
+def is_proper_list(term):
+    while isinstance(term, tuple) and term[0] == 'Cons':
+        term = term[2]
+    return term == ('Nil',)
+
+def list_elements(term):
+    while term[0] != 'Nil':
+        assert term[0] == 'Cons'
+        yield term[1]
+        term = term[2]
