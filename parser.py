@@ -59,7 +59,7 @@ Left_of a b c <- Append _ (Cons a (Cons b _)) c.
 """
 
 import collections
-from parson import Grammar, hug, join
+from parson import Grammar, join
 from pythological import run, Var, fail, succeed, eq, either, both, delay
 
 grammar = r"""
@@ -195,8 +195,7 @@ parser = Grammar(grammar)(mk_fact      = mk_fact,
                           mk_variable  = mk_variable,
                           mk_anon      = mk_anon,
                           int = int,
-                          join = join,
-                          hug = hug)
+                          join = join)
 
 def foldr(f, z, xs):
     for x in reversed(xs):
