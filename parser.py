@@ -184,18 +184,7 @@ def mk_anon(name):
 def mk_variable(name):
     return set([name]), lambda program, args, variables: variables[name]
 
-parser = Grammar(grammar)(mk_fact      = mk_fact,
-                          mk_rule      = mk_rule,
-                          mk_predicate = mk_predicate,
-                          mk_calls     = mk_calls,
-                          mk_call      = mk_call,
-                          mk_list      = mk_list,
-                          mk_compound  = mk_compound,
-                          mk_literal   = mk_literal,
-                          mk_variable  = mk_variable,
-                          mk_anon      = mk_anon,
-                          int = int,
-                          join = join)
+parser = Grammar(grammar)(**globals())
 
 def foldr(f, z, xs):
     for x in reversed(xs):
