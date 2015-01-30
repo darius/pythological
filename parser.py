@@ -63,8 +63,8 @@ from parson import Grammar, join
 from pythological import run, Var, fail, succeed, eq, either, both, delay
 
 grammar = r"""
-program: _ rule* ~/./.
-query:   _ calls ~/./.
+program: _ rule* !/./.
+query:   _ calls !/./.
 
 rule: predicate ('<-'_ calls '.'_   :mk_rule
                 |            '.'_   :mk_fact).
