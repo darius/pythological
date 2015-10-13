@@ -1,3 +1,4 @@
+# import sys; sys.setrecursionlimit(5000)
 from parser import parse
 from pythological import fresh, run, both, eq
 
@@ -14,18 +15,34 @@ LookUp (Bind key val _) key val.
 LookUp (Bind _ _ r)     key val  <- LookUp r key val.
 """
 program = parse(example)
+Type = program['Type']
+
+Nil = ('Nil',)
+def Bind(x, v, r): return 'Bind', x, v, r
+
+def Fn(dom, ran):  return 'Fn', dom, ran
+
+def V(x):          return 'V', x
+def L(x, e):       return 'L', x, e
+def C(f, e):       return 'C', f, e
 
 q, a, b = fresh('q a b')
 
-I = ('L', 'x', ('V', 'x'))
-I_type = ('Fn', a, a)
+f, g, x, y = 'fgxy'
+A, B = 'AB'
 
-## run(q, program['Type'](I, ('Nil',), q))
+## run(q, Type(L(x, V(x)), Nil, q))
 #. [('Fn', _.0, _.0)]
 
-## run(q, program['Type'](q, ('Bind', 'x', a, ('Nil',)), a), n=1)
+## run(q, Type(q, Bind(x, a, Nil), a), n=1)
 #. [('V', 'x')]
 
-## run(q, program['Type'](q, ('Nil',), I_type), n=1)
+## run(q, Type(q, Nil, Fn(a, a)), n=1)
 #. [('L', _.0, ('V', _.0))]
-# import sys; sys.setrecursionlimit(5000)
+
+
+## run(q, Type(L(x, L(y, C(V(y), V(x)))), Nil, q), n=1)
+#. [('Fn', _.0, ('Fn', ('Fn', _.0, _.1), _.1))]
+
+## run(q, Type(L(f, L(g, L(x, C(V(f), C(V(g), V(x)))))), Nil, q), n=1)
+#. [('Fn', ('Fn', _.0, _.1), ('Fn', ('Fn', _.2, _.0), ('Fn', _.2, _.1)))]
