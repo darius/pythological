@@ -1,3 +1,13 @@
+"""
+Type inference/checking for simply-typed lambda calculus.
+
+V x             means the variable named x
+L x e           means (lambda (x) e)
+C f e           means (f e)
+
+Fn domain range means the type: domain -> range
+"""
+
 # import sys; sys.setrecursionlimit(5000)
 from parser import parse
 from pythological import fresh, run, both, eq
