@@ -1,29 +1,30 @@
 """
-Sketch of a friendly syntax frontend.
+Basics of a friendly syntax frontend.
 """
 
 ## from pythological import fresh, run
-## program = collect_rules(parser.program(example))
-## program.keys()
-#. ['Next_to', 'Left_of', 'Member', 'Zebra', 'Main', 'Left_and_middle', 'Append']
-## program.query('Member q []')
-#. []
-## program.query('Member x (Cons 5 [])')
-#. [{'x': 5}]
-## program.query('Member x [5]')
-#. [{'x': 5}]
-## program.query('Member x [a]')
-#. [{'a': _.0, 'x': _.0}]
-## program.query('Member x [22, 137]')
-#. [{'x': 22}, {'x': 137}]
-## for res in program.query('Member x a', n=3): print res['x'], unparse(res['a'])
-#. _.0 (Cons _.0 _.1)
-#. _.1 (Cons _.0 (Cons _.1 _.2))
-#. _.2 (Cons _.0 (Cons _.1 (Cons _.2 _.3)))
-## program.query('Member x [5, 7], Member x [7, 8]')
-#. [{'x': 7}]
-### run(q, both(eq(q, (a, b)), program['Zebra'](a, b)))
+## program = parse(example)
+## sorted(program.keys())
+#. ['Append', 'Left_and_middle', 'Left_of', 'Main', 'Member', 'Next_to', 'Zebra']
+## program.q('Member q []')
+## program.q('Member x (Cons 5 [])')
+#. x: 5
+## program.q('Member x [5]')
+#. x: 5
+## program.q('Member x [a]')
+#. a: _.0; x: _.0
+## program.q('Member x [22, 137]')
+#. x: 22
+#. x: 137
+## program.q('Member x a', n=3)
+#. a: (Cons _.0 _.1); x: _.0
+#. a: (Cons _.0 (Cons _.1 _.2)); x: _.0
+#. a: (Cons _.0 (Cons _.1 (Cons _.2 _.3))); x: _.0
+## program.q('Member x [5, 7], Member x [7, 8]')
+#. x: 7
 
+### program.q('Zebra owns hs', n=1)
+###. hs: [(H Yellow Norwegian Cats Water Dunhill), (H Blue Dane Horse Tea Blend), (H Red English Birds Milk Pallmall), (H Green German Zebra Coffee Prince), (H White Swede Dog Beer Bluemaster)]; owns: German
 
 example = """
 Append [] ys ys.
@@ -63,8 +64,11 @@ from parson import Grammar, hug, join
 from pythological import run, Var, fail, succeed, eq, either, both, delay
 
 grammar = r"""
+# There are two top-level productions, for a program and for a query
+# on some already-loaded program.
+
 program:  _ rule* !/./.
-query:  _ calls !/./.
+query:    _ calls !/./.
 
 rule:  predicate '<-'_ calls '.'_   :mk_rule
      | predicate             '.'_   :mk_fact.
@@ -72,7 +76,7 @@ rule:  predicate '<-'_ calls '.'_   :mk_rule
 predicate:  symbol term*   :mk_predicate.
 
 calls:  call (','_ call)*   :mk_calls.
-call:  symbol term*   :mk_call.
+call:   symbol term*   :mk_call.
 
 term:  '('_ symbol term* ')'_  :mk_compound
      | '['_ elements ']'_      :mk_list   # XXX what about ([])?
@@ -82,12 +86,11 @@ term:  '('_ symbol term* ')'_  :mk_compound
      | number         :mk_literal
      | string         :mk_literal.
 
-elements:  term (','_ term)*
-         | .
+elements:  (term (','_ term)*)?.
 
-symbol:    /([A-Z]\w*)/_.
-variable:  /([a-z]\w*)/_.
-anonvar:   /(_\w*)/_.
+symbol =   /([A-Z]\w*)/_.
+variable = /([a-z]\w*)/_.
+anonvar =  /(_\w*)/_.
 
 number:    /(\d+)/_   :int.   # TODO more
 
@@ -97,44 +100,80 @@ qchar = /[^"]/.  # TODO more
 _ = /\s*/.   # TODO comments
 """
 
+# Most of the following constructors return a pair (fvs, ev) of a set
+# of free variable names (fvs) and an evaluation function (ev); the
+# latter will take arguments (program, args, variables) and perform
+# the runtime semantics (e.g. return a goal).
+
+# These arguments will be:
+#  * program: A map from symbol-name to ev-function.
+#  * args: The arguments to the call to the function we're in.
+#      These are only needed to unify with the head of a rule,
+#      so it's silly to pass them around to every semantic action,
+#      but I haven't got around to optimizing that out.
+#  * variables: a map from variable name to Var, for each of fvs.
+
+# A few of the constructors return a triple (symbol, fvs, ev) where
+# symbol names the function they're for.
+
 class Program(dict):
-    def query(self, string, n=None):
-        (fvs, ev), = parser.query(string)
-        variables = tuple(map(Var, fvs))
-        q = Var('q')
-        results = run(q, both(eq(q, variables),
-                              ev(self, (), dict(zip(fvs, variables)))),
-                      n=n)
-        return [dict(zip(fvs, result)) for result in results]
+    "A map from rule name to function, with convenience methods for querying."
 
-def parse(string):
-    return collect_rules(parser.program(string))
+    def q(self, query_string, **kwargs):
+        for result in self.ask(query_string, **kwargs):
+            print '; '.join('%s: %s' % (name, unparse(result[name]))
+                             for name in sorted(result))
 
-def mk_program(rules):
-    program = collect_rules(rules)
-    return program['Main']
+    def ask(self, query_string, vars=None, n=None):
+        from pythological import empty_s, reify
+        from itertools import islice
 
-def collect_rules(rules_tuple):
+        (fvs, ev), = parser.query(query_string)
+        if isinstance(vars, str): vars = vars.split()
+        elif vars is None:        vars = fvs
+
+        fv_map = dict(zip(fvs, map(Var, fvs)))
+        goal = ev(self, (), fv_map)
+        ss = (opt_s for opt_s in goal(empty_s) if opt_s is not None)
+        if n is not None:
+            ss = islice(ss, 0, n)
+
+        for s in ss:
+            yield {name: reify(fv_map[name], s) for name in vars}
+
+def parse(program_string):
+    "Turn a textual program into a Program."
+    return collect_rules(parser.program(program_string))
+
+def collect_rules(rules_seq):
+    """Turn a sequence of rules into a program, gathering together the
+    clauses for each function; a function tries its rules in order."""
     rules = collections.defaultdict(list)
-    for symbol, fvs, ev in rules_tuple:
+    for symbol, fvs, ev in rules_seq:
         rules[symbol].append((fvs, ev))
     def make_function(symbol, pairs):
         fvs, ev = collect(pairs)
         def fn(*args):
-            variables = dict((name, Var(name)) for name in fvs)
+            variables = {name: Var(name) for name in fvs}
             return foldr(either, fail, ev(program, args, variables))
+        fn.__name__ = symbol
         return fn
     program = Program((symbol, make_function(symbol, pairs))
                       for symbol, pairs in rules.items())
     return program
 
 def collect(pairs):
-    fvs = set().union(*[fvs for fvs, _ in pairs])
-    evs = [ev for _, ev in pairs]
+    """Given a tuple of (fvs,ev) pairs, return an (fvs,ev_all) pair whose
+    action is to call each ev in order and return a tuple of all their
+    values."""
+    fvs = set().union(*[fvs for fvs,_ in pairs])
+    evs = [ev for _,ev in pairs]
     return fvs, (lambda program, args, variables:
                      tuple(ev(program, args, variables) for ev in evs))
     
 def mk_rule(predicate, calls):
+    """A rule combines a symbol naming the function it's a part of, a head
+    which must match, and a body that's called when the head matches."""
     symbol, head_fvs, head_ev = predicate
     call_fvs, ev_calls = calls
     fvs = head_fvs | call_fvs
@@ -161,16 +200,30 @@ def mk_call(symbol, *terms):
                                                              args,
                                                              variables))))
 
+# A list is represented as a Lisp-like datum, either Nil for [] or
+# ('Cons', head, tail) for [head | tail].
+
 def mk_list(*terms):
     return foldr(cons, nil, terms)
 
 nil = (set(), lambda program, args, variables: ('Nil',))
 
-def cons((h_fvs, h_fn), (t_fvs, t_fn)):
-    return h_fvs | t_fvs, (lambda program, args, variables:
-                             ('Cons',
-                              h_fn(program, args, variables),
-                              t_fn(program, args, variables)))
+def cons((head_fvs, head_fn), (tail_fvs, tail_fn)):
+    return head_fvs | tail_fvs, (lambda program, args, variables:
+                                 ('Cons',
+                                  head_fn(program, args, variables),
+                                  tail_fn(program, args, variables)))
+
+def is_proper_list(term):
+    while isinstance(term, tuple) and term[0] == 'Cons':
+        term = term[2]
+    return term == ('Nil',)
+
+def list_elements(term):
+    while term[0] != 'Nil':
+        assert len(term) == 3 and term[0] == 'Cons'
+        yield term[1]
+        term = term[2]
 
 def mk_compound(symbol, *terms):
     fvs, ev_terms = collect(terms)
@@ -215,14 +268,3 @@ def unparse(term):
     else:
         return '(%s%s)' % (term[0],
                            ''.join(' ' + unparse(arg) for arg in term[1:]))
-
-def is_proper_list(term):
-    while isinstance(term, tuple) and term[0] == 'Cons':
-        term = term[2]
-    return term == ('Nil',)
-
-def list_elements(term):
-    while term[0] != 'Nil':
-        assert term[0] == 'Cons'
-        yield term[1]
-        term = term[2]

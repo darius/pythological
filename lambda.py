@@ -1,7 +1,10 @@
-from parser import parse
-from pythological import fresh, run, both, eq
-
+"""
+Well-typed expressions in the simply-typed lambda calculus.
 # XXX LookUp needs disunify to avoid shadowed bindings
+"""
+
+from parser import parse, unparse
+from pythological import fresh, run, both, eq
 
 example = """
 
@@ -15,17 +18,13 @@ LookUp (Bind _ _ r)     key val  <- LookUp r key val.
 """
 program = parse(example)
 
-q, a, b = fresh('q a b')
-
-I = ('L', 'x', ('V', 'x'))
-I_type = ('Fn', a, a)
-
-## run(q, program['Type'](I, ('Nil',), q))
-#. [('Fn', _.0, _.0)]
-
-## run(q, program['Type'](q, ('Bind', 'x', a, ('Nil',)), a), n=1)
-#. [('V', 'x')]
-
-## run(q, program['Type'](q, ('Nil',), I_type), n=1)
-#. [('L', _.0, ('V', _.0))]
 # import sys; sys.setrecursionlimit(5000)
+
+## program.q('Type (L x (V x)) [] t', vars='t')
+#. t: (Fn _.0 _.0)
+
+## program.q('Type e (Bind X t []) t', vars='e', n=1)
+#. e: (V X)
+
+## program.q('Type e [] (Fn t t)', vars='e', n=1)
+#. e: (L _.0 (V _.0))
