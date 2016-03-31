@@ -206,11 +206,11 @@ def mk_list(*terms):
 
 nil = (set(), lambda program, args, variables: ('Nil',))
 
-def cons((head_fvs, head_fn), (tail_fvs, tail_fn)):
-    return head_fvs | tail_fvs, (lambda program, args, variables:
-                                 ('Cons',
-                                  head_fn(program, args, variables),
-                                  tail_fn(program, args, variables)))
+def cons((first_fvs, first_ev), (rest_fvs, rest_ev)):
+    return first_fvs | rest_fvs, (lambda program, args, variables:
+                                  ('Cons',
+                                   first_ev(program, args, variables),
+                                   rest_ev(program, args, variables)))
 
 def is_proper_list(term):
     while isinstance(term, tuple) and term[0] == 'Cons':
