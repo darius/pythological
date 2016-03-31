@@ -2,7 +2,6 @@
 Basics of a friendly syntax frontend.
 """
 
-## from pythological import fresh, run
 ## program = parse(example)
 ## sorted(program.keys())
 #. ['Append', 'Left_and_middle', 'Left_of', 'Main', 'Member', 'Next_to', 'Zebra']
@@ -60,41 +59,40 @@ Left_of a b c <- Append _ (Cons a (Cons b _)) c.
 """
 
 import collections
-from parson import Grammar, hug, join
+from parson import Grammar, join
 from pythological import run, Var, fail, succeed, eq, either, both, delay
 
 grammar = r"""
 # There are two top-level productions, for a program and for a query
 # on some already-loaded program.
 
-program:  _ rule* !/./.
-query:    _ calls !/./.
+program: _ rule* !/./.
+query:   _ calls !/./.
 
-rule:  predicate '<-'_ calls '.'_   :mk_rule
-     | predicate             '.'_   :mk_fact.
+rule: predicate ('<-'_ calls '.'_   :mk_rule
+                |            '.'_   :mk_fact).
+predicate: symbol term*       :mk_predicate.
 
-predicate:  symbol term*   :mk_predicate.
+calls: call (','_ call)*      :mk_calls.
+call:  symbol term*           :mk_call.
 
-calls:  call (','_ call)*   :mk_calls.
-call:   symbol term*   :mk_call.
+term: '('_ symbol term* ')'_  :mk_compound
+    | '['_ elements? ']'_     :mk_list   # XXX what about ([])?
+    | symbol                  :mk_compound
+    | variable                :mk_variable
+    | anonvar                 :mk_anon
+    | number                  :mk_literal
+    | string                  :mk_literal.
 
-term:  '('_ symbol term* ')'_  :mk_compound
-     | '['_ elements ']'_      :mk_list   # XXX what about ([])?
-     | symbol         :mk_compound
-     | variable       :mk_variable
-     | anonvar        :mk_anon
-     | number         :mk_literal
-     | string         :mk_literal.
-
-elements:  (term (','_ term)*)?.
+elements = term (','_ term)*.
 
 symbol =   /([A-Z]\w*)/_.
 variable = /([a-z]\w*)/_.
 anonvar =  /(_\w*)/_.
 
-number:    /(\d+)/_   :int.   # TODO more
+number: /(\d+)/_   :int.   # TODO more
 
-string:    '"' qchar* '"'_  :join.
+string: '"' qchar* '"'_  :join.
 qchar = /[^"]/.  # TODO more
 
 _ = /\s*/.   # TODO comments
@@ -239,19 +237,7 @@ def mk_anon(name):
 def mk_variable(name):
     return set([name]), lambda program, args, variables: variables[name]
 
-parser = Grammar(grammar)(mk_fact      = mk_fact,
-                          mk_rule      = mk_rule,
-                          mk_predicate = mk_predicate,
-                          mk_calls     = mk_calls,
-                          mk_call      = mk_call,
-                          mk_list      = mk_list,
-                          mk_compound  = mk_compound,
-                          mk_literal   = mk_literal,
-                          mk_variable  = mk_variable,
-                          mk_anon      = mk_anon,
-                          int = int,
-                          join = join,
-                          hug = hug)
+parser = Grammar(grammar)(**globals())
 
 def foldr(f, z, xs):
     for x in reversed(xs):
