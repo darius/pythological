@@ -5,6 +5,7 @@ The goal part doesn't try to follow him in any detail, using Python generators
 instead.
 """
 
+from collections import deque
 from itertools import islice
 
 
@@ -49,10 +50,12 @@ def either(goal1, goal2):
 def interleave(iters):
     """Given a tuple of iterators, generate one value from each, in
     order, cyclically until all are exhausted."""
-    while iters:
-        try:                  yield next(iters[0])
-        except StopIteration: iters = iters[1:]
-        else:                 iters = iters[1:] + (iters[0],)
+    q = deque(iters)
+    while q:
+        it = q.popleft()
+        try:                  yield next(it)
+        except StopIteration: pass
+        else:                 q.append(it)            
 
 def both(goal1, goal2):
     "Succeed when goal1 and goal2 both succeed (sharing new substitutions)."
@@ -260,12 +263,10 @@ membero = prologly('x t _',
 #. ((4, (3, ())), (2, (1, ())))
 #. ((4, (3, (2, ()))), (1, ()))
 #. ((4, (3, (2, (1, ())))), ())
-#. 
 
 ## for r in run(q, both(eq(q, (a, b)), appendo(a, b, (1, ())))): print r
 #. ((), (1, ()))
 #. ((1, ()), ())
-#. 
 
 def nevero(): return delay(lambda: nevero())
 
