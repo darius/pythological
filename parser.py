@@ -20,7 +20,6 @@ Sketch of a friendly syntax frontend.
 #. _.0 (Cons _.0 _.1)
 #. _.1 (Cons _.0 (Cons _.1 _.2))
 #. _.2 (Cons _.0 (Cons _.1 (Cons _.2 _.3)))
-#. 
 ## program.query('Member x [5, 7], Member x [7, 8]')
 #. [{'x': 7}]
 ### run(q, both(eq(q, (a, b)), program['Zebra'](a, b)))
@@ -64,18 +63,18 @@ from parson import Grammar, hug, join
 from pythological import run, Var, fail, succeed, eq, either, both, delay
 
 grammar = r"""
-program = _ rule* ~/./.
-query = _ calls ~/./.
+program:  _ rule* !/./.
+query:  _ calls !/./.
 
-rule = predicate '<-'_ calls '.'_   :mk_rule
+rule:  predicate '<-'_ calls '.'_   :mk_rule
      | predicate             '.'_   :mk_fact.
 
-predicate = symbol term*   :mk_predicate.
+predicate:  symbol term*   :mk_predicate.
 
-calls = call (','_ call)*   :mk_calls.
-call = symbol term*   :mk_call.
+calls:  call (','_ call)*   :mk_calls.
+call:  symbol term*   :mk_call.
 
-term = '('_ symbol term* ')'_  :mk_compound
+term:  '('_ symbol term* ')'_  :mk_compound
      | '['_ elements ']'_      :mk_list   # XXX what about ([])?
      | symbol         :mk_compound
      | variable       :mk_variable
@@ -83,16 +82,16 @@ term = '('_ symbol term* ')'_  :mk_compound
      | number         :mk_literal
      | string         :mk_literal.
 
-elements = term (','_ term)*
+elements:  term (','_ term)*
          | .
 
-symbol   = /([A-Z]\w*)/_.
-variable = /([a-z]\w*)/_.
-anonvar  = /(_\w*)/_.
+symbol:    /([A-Z]\w*)/_.
+variable:  /([a-z]\w*)/_.
+anonvar:   /(_\w*)/_.
 
-number = /(\d+)/_   :int.   # TODO more
+number:    /(\d+)/_   :int.   # TODO more
 
-string = '"' qchar* '"'_  :join.
+string:    '"' qchar* '"'_  :join.
 qchar = /[^"]/.  # TODO more
 
 _ = /\s*/.   # TODO comments
