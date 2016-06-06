@@ -66,8 +66,8 @@ grammar = r"""
 # There are two top-level productions, for a program and for a query
 # on some already-loaded program.
 
-program: _ rule* !/./.
-query:   _ calls !/./.
+program: _ rule* :end.
+query:   _ calls :end.
 
 rule: predicate ('<-'_ calls '.'_   :mk_rule
                 |            '.'_   :mk_fact).
