@@ -71,22 +71,22 @@ query:   _ calls :end.
 
 rule: predicate ('<-'_ calls '.'_   :mk_rule
                 |            '.'_   :mk_fact).
-predicate: symbol term*       :mk_predicate.
+predicate: symbol term*        :mk_predicate.
 
-calls: call ++ (','_)         :mk_calls.
-call:  symbol term*           :mk_call.
+calls: call ++ (','_)          :mk_calls.
+call:  symbol term*            :mk_call.
 
-term: '('_ symbol term* ')'_  :mk_compound
+term: '('_ symbol term* ')'_   :mk_compound
     | '['_ term ** (','_) ']'_ :mk_list   # XXX what about ([])?
-    | symbol                  :mk_compound
-    | variable                :mk_variable
-    | anonvar                 :mk_anon
-    | number                  :mk_literal
-    | string                  :mk_literal.
+    | symbol                   :mk_compound
+    | variable                 :mk_variable
+    | anonvar                  :mk_anon
+    | number                   :mk_literal
+    | string                   :mk_literal.
 
-symbol =   /([A-Z]\w*)/_.
+symbol   = /([A-Z]\w*)/_.
 variable = /([a-z]\w*)/_.
-anonvar =  /(_\w*)/_.
+anonvar  = /(_\w*)/_.
 
 number: /(\d+)/_   :int.   # TODO more
 
