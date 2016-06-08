@@ -73,18 +73,16 @@ rule: predicate ('<-'_ calls '.'_   :mk_rule
                 |            '.'_   :mk_fact).
 predicate: symbol term*       :mk_predicate.
 
-calls: call (','_ call)*      :mk_calls.
+calls: call ++ (','_)         :mk_calls.
 call:  symbol term*           :mk_call.
 
 term: '('_ symbol term* ')'_  :mk_compound
-    | '['_ elements? ']'_     :mk_list   # XXX what about ([])?
+    | '['_ term ** (','_) ']'_ :mk_list   # XXX what about ([])?
     | symbol                  :mk_compound
     | variable                :mk_variable
     | anonvar                 :mk_anon
     | number                  :mk_literal
     | string                  :mk_literal.
-
-elements = term (','_ term)*.
 
 symbol =   /([A-Z]\w*)/_.
 variable = /([a-z]\w*)/_.
