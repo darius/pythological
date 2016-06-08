@@ -66,34 +66,34 @@ grammar = r"""
 # There are two top-level productions, for a program and for a query
 # on some already-loaded program.
 
-program: _ rule* :end.
-query:   _ calls :end.
+program: '' rule* :end.
+query:   '' calls :end.
 
-rule: predicate ('<-'_ calls '.'_   :mk_rule
-                |            '.'_   :mk_fact).
-predicate: symbol term*        :mk_predicate.
+rule: predicate ('<-' calls '.' :mk_rule
+                |           '.' :mk_fact).
+predicate: symbol term*         :mk_predicate.
 
-calls: call ++ (','_)          :mk_calls.
-call:  symbol term*            :mk_call.
+calls: call ++ ','              :mk_calls.
+call:  symbol term*             :mk_call.
 
-term: '('_ symbol term* ')'_   :mk_compound
-    | '['_ term ** (','_) ']'_ :mk_list   # XXX what about ([])?
-    | symbol                   :mk_compound
-    | variable                 :mk_variable
-    | anonvar                  :mk_anon
-    | number                   :mk_literal
-    | string                   :mk_literal.
+term: '(' symbol term* ')'      :mk_compound
+    | '[' term ** ',' ']'       :mk_list   # XXX what about ([])?
+    | symbol                    :mk_compound
+    | variable                  :mk_variable
+    | anonvar                   :mk_anon
+    | number                    :mk_literal
+    | string                    :mk_literal.
 
-symbol   = /([A-Z]\w*)/_.
-variable = /([a-z]\w*)/_.
-anonvar  = /(_\w*)/_.
+symbol:    /([A-Z]\w*)/.
+variable:  /([a-z]\w*)/.
+anonvar:   /(_\w*)/.
 
-number: /(\d+)/_   :int.   # TODO more
+number:    /(\d+)/   :int.   # TODO more
 
-string: '"' qchar* '"'_  :join.
-qchar = /[^"]/.  # TODO more
+string  ~: '"' qchar* '"' FNORD  :join.
+qchar   ~: /[^"]/.  # TODO more
 
-_ = /\s*/.   # TODO comments
+FNORD   ~: /\s*/.   # TODO comments
 """
 
 # Most of the following constructors return a pair (fvs, ev) of a set
