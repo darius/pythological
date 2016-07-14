@@ -1,0 +1,7 @@
+Type (V x)   r type              <- LookUp r x type.
+Type (L x e) r (Fn domain range) <- Type e (Bind x domain r) range.
+Type (C f e) r range             <- Type f r (Fn domain range),
+                                    Type e r domain.
+
+LookUp (Bind key val _) key val.
+LookUp (Bind _ _ r)     key val  <- LookUp r key val.

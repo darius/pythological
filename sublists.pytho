@@ -1,0 +1,17 @@
+List Nil.
+List (Cons _ t) <- List t.
+
+Prefix Nil Nil.
+Prefix Nil (Cons _ _).
+Prefix (Cons xh xt) (Cons xh yt) <- Prefix xt yt.
+
+Sublist x y <- Prefix x y.
+Sublist xs (Cons _ yt) <- Sublist xs yt.
+
+Puzzle xs <-
+    List xs,
+    Sublist [B,R,R,C] xs,
+    Sublist [R,C,C,B] xs,
+    Sublist [C,R,C,C] xs,
+    Sublist [R,C,C,R] xs,
+    Sublist [C,R,C,R,C] xs.
