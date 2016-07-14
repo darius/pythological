@@ -59,7 +59,7 @@ Left_of a b c <- Append _ (Cons a (Cons b _)) c.
 """
 
 import collections
-from parson import Grammar, join
+from parson import Grammar, join, Unparsable
 from pythological import run, Var, fail, succeed, eq, either, both, delay
 
 grammar = r"""

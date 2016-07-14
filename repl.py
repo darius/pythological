@@ -14,7 +14,10 @@ def repl(program):
     while True:
         line = raw_input('> ')
         if line == 'quit': break
-        program.q(line)
+        try:
+            program.q(line)
+        except parser.Unparsable as e:
+            syntax_error(e, 'stdin')
 
 def load(filename):
     with open(filename) as f:
