@@ -1,0 +1,18 @@
+ListOfLikes list <- Member x list, Likes Mouse x.
+
+Likes Mouse Cheese.
+Likes Mouse person <- Colorful person, Checkered person.
+Likes Mouse person <- Nerdy person.
+
+Colorful Alice.
+Checkered Alice.
+Nerdy Bob.
+
+Append Nil ys ys.
+Append (Cons x xs) ys (Cons x zs) <- Append xs ys zs.
+
+Member x (Cons x _).
+Member x (Cons _ xs) <- Member x xs.
+
+Example <- Member Carol
+                  (Cons Carol (Cons Alice Nil)).
