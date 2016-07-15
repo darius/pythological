@@ -1,8 +1,4 @@
-Append [] ys ys.
-Append (Cons x xs) ys (Cons x zs) <- Append xs ys zs.
-
-Member x (Cons x _).
-Member x (Cons _ xs) <- Member x xs.
+# Who owns the zebra? A logic puzzle ported from Prolog.
 
 Main owns hs <- Zebra owns hs.
 
@@ -28,3 +24,12 @@ Next_to a b c <- Left_of a b c.
 Next_to a b c <- Left_of b a c.
 
 Left_of a b c <- Append _ (Cons a (Cons b _)) c.
+
+
+# These should go in a standard library:
+
+Append [] ys ys.
+Append (Cons x xs) ys (Cons x zs) <- Append xs ys zs.
+
+Member x (Cons x _).
+Member x (Cons _ xs) <- Member x xs.

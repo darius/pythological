@@ -62,7 +62,8 @@ number:    /(\d+)/   :int.   # TODO more
 string  ~: '"' qchar* '"' FNORD  :join.
 qchar   ~: /[^"]/.  # TODO more
 
-FNORD   ~: /\s*/.   # TODO comments
+FNORD       ~:  whitespace?.
+whitespace  ~:  /(?:\s|#.*)+/.
 """
 
 # Most of the following constructors return a pair (fvs, ev) of a set
