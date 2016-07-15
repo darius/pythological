@@ -2,6 +2,7 @@
 Basics of a friendly syntax frontend.
 """
 
+## example = open('examples/zebra.pytho').read()
 ## program = parse(example)
 ## sorted(program.keys())
 #. ['Append', 'Left_and_middle', 'Left_of', 'Main', 'Member', 'Next_to', 'Zebra']
@@ -25,38 +26,6 @@ Basics of a friendly syntax frontend.
 ### program.q('Zebra owns hs', n=1)
 ###. hs: [(H Yellow Norwegian Cats Water Dunhill), (H Blue Dane Horse Tea Blend), (H Red English Birds Milk Pallmall), (H Green German Zebra Coffee Prince), (H White Swede Dog Beer Bluemaster)]; owns: German
 
-example = """
-Append [] ys ys.
-Append (Cons x xs) ys (Cons x zs) <- Append xs ys zs.
-
-Member x (Cons x _).
-Member x (Cons _ xs) <- Member x xs.
-
-Main owns hs <- Zebra owns hs.
-
-Zebra owns hs <-
-    Left_and_middle hs,
-    Left_of (H Green _ _ Coffee _)    (H White _ _ _ _)  hs,
-    Next_to (H _ _ _ _ Blend)         (H _ _ Cats  _ _)  hs,
-    Next_to (H _ _ _ _ Dunhill)       (H _ _ Horse _ _)  hs,
-    Next_to (H _ Norwegian _ _ _)     (H Blue _ _ _ _)   hs,
-    Next_to (H _ _ _ _ Blend)         (H _ _ _ Water _)  hs,
-    Member  (H Red English _ _ _)     hs,
-    Member  (H _ Swede Dog _ _)       hs,
-    Member  (H _ Dane _ Tea _)        hs,
-    Member  (H _ _ Birds _ Pallmall)  hs,
-    Member  (H Yellow _ _ _ Dunhill)  hs,
-    Member  (H _ _ _ Beer Bluemaster) hs,
-    Member  (H _ German _ _ Prince)   hs,
-    Member  (H _ owns Zebra _ _)      hs.
-
-Left_and_middle [(H _ Norwegian _ _ _), _, (H _ _ _ Milk _), _, _].
-
-Next_to a b c <- Left_of a b c.
-Next_to a b c <- Left_of b a c.
-
-Left_of a b c <- Append _ (Cons a (Cons b _)) c.
-"""
 
 import collections
 from parson import Grammar, join, Unparsable
