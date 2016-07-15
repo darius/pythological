@@ -1,3 +1,21 @@
+# From David Nolen:
+# Design a program that finds the smallest list that contains the following sublists:
+# ["b", "r", "r", "c"]
+# ["r", "c", "c", "b"]
+# ["c", "r", "c", "c"]
+# ["r", "c", "c", "r"]
+# ["c", "r", "c", "r", "c"]
+# The correct answer is:
+# ["b", "r", "r", "c", "c", "r", "c", "r", "c", "r", "c", "c", "b"]
+
+Puzzle xs <-
+    List xs,
+    Sublist [B,R,R,C] xs,
+    Sublist [R,C,C,B] xs,
+    Sublist [C,R,C,C] xs,
+    Sublist [R,C,C,R] xs,
+    Sublist [C,R,C,R,C] xs.
+
 List Nil.
 List (Cons _ t) <- List t.
 
@@ -8,10 +26,3 @@ Prefix (Cons xh xt) (Cons xh yt) <- Prefix xt yt.
 Sublist x y <- Prefix x y.
 Sublist xs (Cons _ yt) <- Sublist xs yt.
 
-Puzzle xs <-
-    List xs,
-    Sublist [B,R,R,C] xs,
-    Sublist [R,C,C,B] xs,
-    Sublist [C,R,C,C] xs,
-    Sublist [R,C,C,R] xs,
-    Sublist [C,R,C,R,C] xs.

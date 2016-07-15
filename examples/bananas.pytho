@@ -1,0 +1,38 @@
+# I forget where I got this (AIMA?) and what it's about.
+# Some kind of monkey-get-banana planning problem, right?
+
+## bananas.q('Step q r end', vars='end')
+#. end: (St Middle OnBox Middle Has)
+#. end: (St _.0 OnBox _.0 _.1)
+#. end: (St _.0 OnFloor _.0 _.1)
+#. end: (St _.0 OnFloor _.1 _.2)
+
+## bananas.q('CanGet (St Left OnFloor Right HasNot) states', n=1)
+#. states: [(St Middle OnBox Middle Has), (St Middle OnBox Middle HasNot), (St Middle OnFloor Middle HasNot), (St Right OnFloor Right HasNot), (St Left OnFloor Right HasNot)]
+
+
+Last (Cons x Nil) x.
+Last (Cons _ rest) x <- Last rest x.
+
+CanGet start states <- Last states start, Gets states.
+Gets (Cons end states) <- HasGot end, Move (Cons end states).
+HasGot (St _ _ _ Has).
+
+Move (Cons start Nil).
+Move (Cons next (Cons state states)) <- Step state action next, Move (Cons state states).
+
+Step (St Middle OnBox Middle HasNot)
+     Grasp
+     (St Middle OnBox Middle Has).
+
+Step (St pos OnFloor pos has)
+     Climb
+     (St pos OnBox pos has).
+
+Step (St pos1 OnFloor pos1 has)
+     Push
+     (St pos2 OnFloor pos2 has).
+
+Step (St pos1 OnFloor box has)
+     Walk
+     (St pos2 OnFloor box has).
