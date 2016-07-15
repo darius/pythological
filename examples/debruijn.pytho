@@ -1,0 +1,10 @@
+# Well-typed expressions in the simply-typed lambda calculus.
+# Using De Bruijn indices this time.
+
+Type (V x)   r type              <- LookUp r x type.
+Type (L e)   r (Fn domain range) <- Type e (Bind domain r) range.
+Type (C f e) r range             <- Type f r (Fn domain range),
+                                    Type e r domain.
+
+LookUp (Bind val _) Z     val.
+LookUp (Bind _ r)   (S x) val  <- LookUp r x val.
