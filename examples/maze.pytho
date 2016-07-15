@@ -1,0 +1,8 @@
+Path a a.
+Path a z <- Neighbor a b, Path b z.
+
+Neighbor a b <- N a b.
+Neighbor a b <- N b a.
+
+N Hobbiton BagEnd.
+N Hobbiton Mordor.
